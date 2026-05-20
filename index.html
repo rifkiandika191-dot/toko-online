@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Toko Online</title>
+    <!-- Framework CSS (Tailwind) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar agar cantik */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <!-- HEADER / NAVBAR -->
+    <nav class="bg-indigo-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-white text-indigo-600 p-1.5 rounded-lg">
+                    <i class="fas fa-store text-xl"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight uppercase">Toko<span class="text-indigo-200">Keren</span></span>
+            </div>
+            
+            <!-- Tombol Keranjang Floating -->
+            <button onclick="toggleCart()" class="relative p-2 bg-indigo-700 hover:bg-indigo-800 rounded-full transition">
+                <i class="fas fa-shopping-bag text-xl"></i>
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-yellow-400 text-indigo-900 text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- BANNER PROMO -->
+    <header class="bg-indigo-700 text-white py-8 px-4 text-center">
+        <h2 class="text-2xl md:text-4xl font-extrabold mb-2">Koleksi Terbaru 2024</h2>
+        <p class="text-indigo-100 text-sm md:text-base">Belanja mudah, tinggal pilih dan klik pesan lewat WhatsApp!</p>
+    </header>
+
+    <!-- FILTER KATEGORI -->
+    <div class="sticky top-[60px] bg-white/80 backdrop-blur-md z-40 border-b">
+        <div class="container mx-auto px-4 py-4 flex gap-3 overflow-x-auto no-scrollbar">
+            <button onclick="filterProduct('Semua')" class="cat-btn flex-none px-6 py-2 rounded-full bg-indigo-600 text-white font-semibold shadow-md">Semua</button>
+            <button onclick="filterProduct('Pakaian')" class="cat-btn flex-none px-6 py-2 rounded-full bg-white border text-gray-600 font-semibold hover:bg-indigo-50">Pakaian</button>
+            <button onclick="filterProduct('Sepatu')" class="cat-btn flex-none px-6 py-2 rounded-full bg-white border text-gray-600 font-semibold hover:bg-indigo-50">Sepatu</button>
+            <button onclick="filterProduct('Aksesoris')" class="cat-btn flex-none px-6 py-2 rounded-full bg-white border text-gray-600 font-semibold hover:bg-indigo-50">Aksesoris</button>
+        </div>
+    </div>
+
+    <!-- DAFTAR PRODUK -->
+    <main class="container mx-auto px-4 py-8">
+        <div id="product-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+            <!-- Produk akan dimuat otomatis oleh JS -->
+        </div>
+    </main>
+
+    <!-- MODAL KERANJANG -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/60 z-[60] hidden backdrop-blur-sm transition-all shadow-2xl">
+        <div class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col animate-slide-in">
+            <div class="p-4 bg-indigo-600 text-white flex justify-between items-center">
+                <h3 class="text-lg font-bold"><i class="fas fa-shopping-cart mr-2"></i>Keranjang Belanja</h3>
+                <button onclick="toggleCart()" class="text-2xl">&times;</button>
+            </div>
+            
+            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Item Keranjang -->
+            </div>
+
+            <div class="p-6 border-t bg-gray-50">
+                <div class="flex justify-between items-center mb-6 text-xl">
+                    <span class="font-medium text-gray-600">Total Harga:</span>
+                    <span id="cart-total" class="font-bold text-indigo-700 text-2xl">Rp 0</span>
+                </div>
+                <button onclick="sendToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg transition flex items-center justify-center gap-3">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                    Kirim Pesanan Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /** 
+         * DATA PRODUK 
+         * Kamu bisa ganti bagian image: "https://..." menjadi image: "img/namafile.jpg"
+         */
+        const products = [
+            { id: 1, category: "Pakaian", name: "Kemeja Flanel Blue", price: 155000, image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=500" },
+            { id: 2, category: "Sepatu", name: "Sneaker White OG", price: 420000, image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500" },
+            { id: 3, category: "Aksesoris", name: "Jam Tangan Quartz", price: 215000, image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=500" },
+            { id: 4, category: "Aksesoris", name: "Tas Canvas Khaki", price: 185000, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500" },
+            { id: 5, category: "Pakaian", name: "Jaket Parka Olive", price: 299000, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500" },
+            { id: 6, category: "Sepatu", name: "Boot Brown Leather", price: 550000, image: "https://images.unsplash.com/photo-1520639889456-7844bdfd1d2e?w=500" },
+        ];
+
+        let cart = [];
+
+        // Menampilkan Produk ke HTML
+        function renderProducts(categoryFilter = 'Semua') {
+            const list = document.getElementById('product-list');
+            const filtered = categoryFilter === 'Semua' 
+                ? products 
+                : products.filter(p => p.category === categoryFilter);
+
+            list.innerHTML = filtered.map(p => `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group">
+                    <div class="relative overflow-hidden aspect-square">
+                        <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute top-2 left-2 bg-indigo-600 text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase">${p.category}</div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-gray-800 mb-1 truncate">${p.name}</h3>
+                        <p class="text-indigo-600 font-black text-lg mb-4">Rp ${p.price.toLocaleString('id-ID')}</p>
+                        <button onclick="addToCart(${p.id})" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-600 transition shadow-md">
+                            + Keranjang
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter Kategori
+        function filterProduct(cat) {
+            renderProducts(cat);
+            const btns = document.querySelectorAll('.cat-btn');
+            btns.forEach(btn => {
+                if(btn.innerText === cat) {
+                    btn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+                    btn.classList.remove('bg-white', 'text-gray-600', 'border');
+                } else {
+                    btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                    btn.classList.add('bg-white', 'text-gray-600', 'border');
+                }
+            });
+        }
+
+        // Tambah ke Keranjang
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            cart.push(product);
+            updateCartUI();
+            
+            // Animasi kecil saat tambah
+            const btn = event.target;
+            btn.innerText = "Ditambahkan!";
+            btn.classList.replace('bg-gray-900', 'bg-green-500');
+            setTimeout(() => {
+                btn.innerText = "+ Keranjang";
+                btn.classList.replace('bg-green-500', 'bg-gray-900');
+            }, 800);
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const itemsContainer = document.getElementById('cart-items');
+            const totalDisplay = document.getElementById('cart-total');
+            
+            if(cart.length === 0) {
+                itemsContainer.innerHTML = `<div class="text-center py-20"><i class="fas fa-box-open text-5xl text-gray-200 mb-4"></i><p class="text-gray-400">Keranjang kosong</p></div>`;
+                totalDisplay.innerText = "Rp 0";
+                return;
+            }
+
+            let total = 0;
+            itemsContainer.innerHTML = cart.map((item, index) => {
+                total += item.price;
+                return `
+                    <div class="flex items-center gap-4 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                        <img src="${item.image}" class="w-16 h-16 object-cover rounded-xl">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm text-gray-800">${item.name}</h4>
+                            <p class="text-indigo-600 font-bold">Rp ${item.price.toLocaleString('id-ID')}</p>
+                        </div>
+                        <button onclick="removeItem(${index})" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+            }).join('');
+            totalDisplay.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function toggleCart() {
+            document.getElementById('cart-modal').classList.toggle('hidden');
+        }
+
+        // WHATSAPP INTEGRATION
+        function sendToWhatsApp() {
+            if (cart.length === 0) return;
+
+            const WA_NUMBER = "628123456789"; // GANTI DENGAN NOMOR HP KAMU
+            let message = "*ORDER BARU - TOKOKEREN*\n";
+            message += "----------------------------\n\n";
+            
+            let total = 0;
+            cart.forEach((item, index) => {
+                message += `${index + 1}. *${item.name}*\n   Harga: Rp ${item.price.toLocaleString('id-ID')}\n`;
+                total += item.price;
+            });
+
+            message += "\n----------------------------\n";
+            message += `*TOTAL PEMBAYARAN: Rp ${total.toLocaleString('id-ID')}*\n\n`;
+            message += "Nama Lengkap:\nAlamat:\nNo. HP:";
+            
+            const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        // Jalankan saat pertama buka
+        renderProducts();
+    </script>
+</body>
+</html>
