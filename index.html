@@ -19,19 +19,89 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .modal-active { overflow: hidden; }
+        #detail-img { cursor: zoom-in; }
+        #zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: none; align-items: center; justify-content: center; z-index: 120; padding: 1.5rem; }
+        #zoom-overlay.active { display: flex; }
+        #zoom-overlay img { max-width: 100%; max-height: 100%; border-radius: 1rem; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        #clear-toast { min-width: 260px; }
+        @keyframes slide-in-up {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slide-out-down {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(20px); }
+        }
+        @keyframes blink-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+        .blink-red {
+            animation: blink-red 1.2s ease-in-out infinite;
+            color: #f87171;
+        }
+        .animate-slide-in { animation: slide-in-up .35s ease forwards; }
+        .animate-slide-out { animation: slide-out-down .35s ease forwards; }
+        .faq-answer {
+            display: block;
+            max-height: 500px;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+        .faq-answer.hidden {
+            display: none;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            padding: 0 1.5rem;
+        }
+        @keyframes card-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes icon-bounce {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.15) rotate(5deg); }
+        }
+        .care-card {
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .care-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(99,102,241,0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .care-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(99,102,241,0.15);
+            border-color: rgba(99,102,241,0.3);
+        }
+        .care-card:hover::before {
+            opacity: 1;
+        }
+        .care-card:hover .care-icon {
+            animation: icon-bounce 0.6s ease-in-out;
+        }
+        .care-card:hover h3 {
+            color: #4f46e5;
+        }
+        .care-icon {
+            transition: all 0.3s ease;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
 
-    <!-- 1. LIVE GOLD PRICE TICKER -->
+    <!-- 1. PROMO BAR -->
     <div class="bg-yellow-500 text-yellow-950 py-1.5 overflow-hidden border-b border-yellow-600 shadow-sm sticky top-0 z-[60]">
-        <div class="container mx-auto px-4 flex items-center">
+        <div class="container mx-auto px-4 flex items-center justify-between">
             <span class="bg-yellow-800 text-white text-[10px] font-bold px-2 py-0.5 rounded mr-3 z-10 shadow-sm">LIVE</span>
-            <div class="flex-1 overflow-hidden">
-                <p id="gold-ticker" class="text-sm font-bold animate-marquee">
-                    Menghubungkan ke Gold-API untuk mengambil harga emas dunia terbaru...
-                </p>
-            </div>
+            <p class="text-sm font-bold">Harga emas real-time kini tampil lebih menarik di banner promo.</p>
         </div>
     </div>
 
@@ -43,12 +113,80 @@
                 <span class="text-xl font-black tracking-tighter uppercase">KARYA<span class="text-yellow-400">BARU</span></span>
             </div>
             
-            <button onclick="toggleCart()" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition">
-                <i class="fas fa-shopping-bag text-xl"></i>
-                <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
-            </button>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleWishlist()" id="wishlist-button" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition">
+                    <i class="fas fa-heart text-xl"></i>
+                    <span id="wishlist-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
+                </button>
+                <button onclick="toggleCart()" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition">
+                    <i class="fas fa-shopping-bag text-xl"></i>
+                    <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
+                </button>
+            </div>
         </div>
     </nav>
+
+    <section class="bg-indigo-900 text-white">
+        <div class="container mx-auto px-4 py-12 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] items-center">
+            <div class="space-y-6">
+                <span class="inline-flex items-center gap-2 rounded-full bg-yellow-400/10 px-4 py-2 text-sm font-semibold text-yellow-200 uppercase tracking-[0.25em]">
+                    <i class="fas fa-gem"></i> Promo Eksklusif</span>
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-black leading-tight">Pilihan Perhiasan & Logam Mulia<br class="hidden md:block">Terbaik untuk Momen Spesial Anda</h1>
+                    <p class="mt-4 max-w-xl text-gray-200">Temukan koleksi emas premium dengan desain elegan, kualitas terjamin, dan harga spesial hanya hari ini. Belanja sekarang, beri kesan tak terlupakan.</p>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-[1fr_auto] items-start">
+                    <div class="rounded-[1.75rem] bg-white/10 p-5 border border-white/10 shadow-xl">
+                        <p class="text-xs uppercase tracking-[0.35em] text-white/70">Harga Emas Saat Ini</p>
+                        <p id="gold-ticker" class="mt-4 text-3xl font-black text-white">Memuat...</p>
+                        <p class="mt-2 text-sm text-white/80">Dapatkan penawaran terbaik hanya di Toko Emas KARYA BARU.</p>
+                        <p class="mt-3 text-xs font-bold blink-red">Harga emas dapat berubah sewaktu-waktu.</p>
+                    </div>
+                    <div class="rounded-full bg-yellow-400 px-5 py-4 text-indigo-900 font-bold shadow-xl shadow-yellow-400/30 flex items-center justify-center">
+                        <span>Penawaran Promo Menarik</span>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="filterProduct('Semua')" class="rounded-full bg-yellow-400 px-6 py-3 text-indigo-900 font-bold shadow-xl shadow-yellow-400/30 hover:bg-yellow-300 transition">Lihat Semua Koleksi</button>
+                    <button onclick="toggleCart()" class="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-white font-semibold hover:bg-white/20 transition">Buka Keranjang</button>
+                </div>
+                <div class="grid grid-cols-3 gap-3 text-center text-sm text-gray-200">
+                    <div class="rounded-3xl bg-white/10 px-4 py-5">
+                        <p class="font-black text-xl">100+</p>
+                        <p class="mt-1">Produk Mewah</p>
+                    </div>
+                    <div class="rounded-3xl bg-white/10 px-4 py-5">
+                        <p class="font-black text-xl">Garansi</p>
+                        <p class="mt-1">Asli & Terpercaya</p>
+                    </div>
+                    <div class="rounded-3xl bg-white/10 px-4 py-5">
+                        <p class="font-black text-xl">Pengiriman</p>
+                        <p class="mt-1">Cepat & Aman</p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative overflow-hidden rounded-[2rem] bg-white/10 p-6 shadow-2xl border border-white/10">
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_55%)]"></div>
+                <div class="relative grid gap-4">
+                    <div class="rounded-[1.75rem] overflow-hidden bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 p-6 text-white shadow-xl">
+                        <p class="text-sm uppercase tracking-[0.3em]">Hot Deal</p>
+                        <h2 class="mt-4 text-3xl font-black">Diskon Spesial Hanya Belanja Melalui Website Kami</h2>
+                        <p class="mt-3 text-sm leading-relaxed text-white/90">Promo koleksi terbaik untuk pelanggan baru. Dapatkan harga spesial sekarang!</p>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="rounded-3xl bg-white/10 p-5 shadow-inner border border-white/10">
+                            <p class="text-xs uppercase tracking-[0.35em] text-white/80">Rekomendasi</p>
+                            <p class="mt-2 font-bold text-lg">Kalung Sultan</p>
+                        </div>
+                        <div class="rounded-3xl bg-white/10 p-5 shadow-inner border border-white/10">
+                            <p class="text-xs uppercase tracking-[0.35em] text-white/80">Terlaris</p>
+                            <p class="mt-2 font-bold text-lg">Cincin Emas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- 3. KATEGORI -->
     <div class="bg-white border-b sticky top-[88px] z-40">
@@ -57,10 +195,31 @@
             <button onclick="filterProduct('Kalung')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Kalung</button>
             <button onclick="filterProduct('Cincin')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Cincin</button>
             <button onclick="filterProduct('Anting')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Anting</button>
+            <button onclick="filterProduct('Gelang')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Gelang</button>
             <button onclick="filterProduct('Kalung Sultan')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Kalung Sultan</button>
 
         </div>
     </div>
+
+    <section class="bg-white border-b">
+        <div class="container mx-auto px-4 py-4">
+            <div class="grid gap-3 md:grid-cols-[1.5fr_1fr] items-center">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input id="search-input" oninput="applyFilters()" placeholder="Cari produk atau kategori..." class="w-full pl-11 pr-4 py-3 border rounded-full shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <select id="sort-select" onchange="applyFilters()" class="w-full px-4 py-3 border rounded-full shadow-sm bg-white">
+                        <option value="default">Urutkan: Default</option>
+                        <option value="price-asc">Harga terendah</option>
+                        <option value="price-desc">Harga tertinggi</option>
+                    </select>
+                    <input id="min-weight" type="number" min="0" step="0.1" oninput="applyFilters()" placeholder="Min berat (gram)" class="w-full px-4 py-3 border rounded-full shadow-sm" />
+                    <input id="max-weight" type="number" min="0" step="0.1" oninput="applyFilters()" placeholder="Max berat (gram)" class="w-full px-4 py-3 border rounded-full shadow-sm" />
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- 4. DAFTAR PRODUK -->
     <main class="container mx-auto px-4 py-8">
@@ -69,7 +228,160 @@
         </div>
     </main>
 
-    <!-- 5. MEDIA SOSIAL -->
+    <!-- 5. BLOG TIPS PERAWATAN -->
+    <section class="bg-indigo-50 border-t">
+        <div class="container mx-auto px-4 py-12">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-black text-gray-900 mb-3">Tips Perawatan Emas</h2>
+                <p class="text-gray-600">Panduan lengkap merawat perhiasan emas agar tetap bersinar dan awet</p>
+            </div>
+            <div class="grid gap-6 md:grid-cols-3">
+                <div class="care-card bg-white rounded-2xl p-6 shadow-md border border-indigo-100">
+                    <div class="care-icon mb-4 inline-flex items-center justify-center w-14 h-14 rounded-full bg-yellow-100">
+                        <i class="fas fa-water text-2xl text-yellow-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Pembersihan Rutin</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Bersihkan emas dengan air hangat, sabun lembut, dan sikat halus setiap 2-4 minggu. Hindari bahan kimia keras yang dapat merusak lapisan.</p>
+                </div>
+                <div class="care-card bg-white rounded-2xl p-6 shadow-md border border-indigo-100">
+                    <div class="care-icon mb-4 inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-100">
+                        <i class="fas fa-sun text-2xl text-blue-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Penyimpanan Tepat</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Simpan perhiasan di tempat kering, sejuk, dan terhindar dari cahaya langsung. Gunakan tas khusus atau kotak berlapis beludru untuk mencegah goresan.</p>
+                </div>
+                <div class="care-card bg-white rounded-2xl p-6 shadow-md border border-indigo-100">
+                    <div class="care-icon mb-4 inline-flex items-center justify-center w-14 h-14 rounded-full bg-purple-100">
+                        <i class="fas fa-ring text-2xl text-purple-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Styling Tips</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Kenakan perhiasan emas di akhir rutinitas Anda, setelah make-up dan parfum. Lepas sebelum olahraga, mandi, atau aktivitas berat untuk melindungi dari kerusakan.</p>
+                </div>
+                <div class="care-card bg-white rounded-2xl p-6 shadow-md border border-indigo-100">
+                    <div class="care-icon mb-4 inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100">
+                        <i class="fas fa-flask text-2xl text-red-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Hindari Bahan Kimia</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Jangan biarkan emas bersentuhan dengan klorin, pemutih, atau produk perawatan rumah. Zat-zat ini dapat memudarkan dan merusak logam mulia.</p>
+                </div>
+                <div class="care-card bg-white rounded-2xl p-6 shadow-md border border-indigo-100">
+                    <div class="care-icon mb-4 inline-flex items-center justify-center w-14 h-14 rounded-full bg-orange-100">
+                        <i class="fas fa-gem text-2xl text-orange-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Perawatan Batu Mulia</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Batu permata memerlukan perlakuan khusus. Hindari air panas mendadak dan perubahan suhu yang ekstrem untuk mencegah retak pada permata.</p>
+                </div>
+                <div class="care-card bg-white rounded-2xl p-6 shadow-md border border-indigo-100">
+                    <div class="care-icon mb-4 inline-flex items-center justify-center w-14 h-14 rounded-full bg-cyan-100">
+                        <i class="fas fa-spa text-2xl text-cyan-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Perawatan Profesional</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Kunjungi toko emas terpercaya minimal 1-2 kali per tahun untuk pembersihan dan pemolesan profesional. Kami siap membantu di KARYA BARU.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5a. FAQ SECTION -->
+    <section class="bg-gradient-to-br from-indigo-50 to-white border-t">
+        <div class="container mx-auto px-4 py-12">
+            <div class="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] items-start">
+                <div class="space-y-6">
+                    <div class="inline-block rounded-full bg-indigo-100 px-4 py-2 text-sm font-semibold text-indigo-700">FAQ & Bantuan</div>
+                    <div>
+                        <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Pertanyaan Umum yang Sering Ditanyakan</h2>
+                        <p class="text-gray-600 leading-relaxed">Cari jawaban cepat tentang produk, pemesanan, pengiriman, dan layanan khusus KARYA BARU.</p>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="rounded-3xl border border-indigo-100 bg-white p-6 shadow-sm">
+                            <p class="text-3xl font-black text-indigo-700">6+</p>
+                            <p class="mt-2 text-sm text-gray-600">Pertanyaan yang sudah kami jawab untuk membuat proses belanja Anda lebih mudah.</p>
+                        </div>
+                        <div class="rounded-3xl border border-indigo-100 bg-white p-6 shadow-sm">
+                            <p class="text-3xl font-black text-indigo-700">100% Aman</p>
+                            <p class="mt-2 text-sm text-gray-600">Transaksi dan data dikelola dengan sistem aman dan komunikasi lewat WhatsApp.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="faq-item rounded-[2rem] border border-indigo-100 bg-white shadow-xl overflow-hidden">
+                        <button type="button" aria-expanded="false" onclick="toggleFaq(this)" class="w-full px-6 py-5 flex items-start justify-between gap-4 text-left transition hover:bg-indigo-50">
+                            <div>
+                                <p class="text-sm uppercase tracking-[0.3em] text-indigo-600 font-bold">Keaslian</p>
+                                <h3 class="mt-2 text-lg font-black text-gray-900">Apakah semua produk terjamin asli emas?</h3>
+                            </div>
+                            <i class="fas fa-chevron-down text-indigo-600 text-xl"></i>
+                        </button>
+                        <div class="faq-answer hidden px-6 pb-6 bg-indigo-50 text-gray-700 border-t border-indigo-100">
+                            <p class="py-4">Ya. Semua perhiasan KARYA BARU dibuat dari emas asli dengan kadar yang jelas dan sertifikat keaslian. Anda bisa meminta detail sertifikat saat memesan untuk memastikan mutu produk.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item rounded-[2rem] border border-indigo-100 bg-white shadow-xl overflow-hidden">
+                        <button type="button" aria-expanded="false" onclick="toggleFaq(this)" class="w-full px-6 py-5 flex items-start justify-between gap-4 text-left transition hover:bg-indigo-50">
+                            <div>
+                                <p class="text-sm uppercase tracking-[0.3em] text-indigo-600 font-bold">Pemesanan</p>
+                                <h3 class="mt-2 text-lg font-black text-gray-900">Bagaimana cara memesan via WhatsApp?</h3>
+                            </div>
+                            <i class="fas fa-chevron-down text-indigo-600 text-xl"></i>
+                        </button>
+                        <div class="faq-answer hidden px-6 pb-6 bg-indigo-50 text-gray-700 border-t border-indigo-100">
+                            <p class="py-4">Cukup klik tombol WhatsApp di pojok kanan bawah atau gunakan link kontak. Tuliskan produk yang ingin Anda beli, ukuran, dan detail lain. Tim kami akan membantu konfirmasi stok, harga, dan pengiriman.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item rounded-[2rem] border border-indigo-100 bg-white shadow-xl overflow-hidden">
+                        <button type="button" aria-expanded="false" onclick="toggleFaq(this)" class="w-full px-6 py-5 flex items-start justify-between gap-4 text-left transition hover:bg-indigo-50">
+                            <div>
+                                <p class="text-sm uppercase tracking-[0.3em] text-indigo-600 font-bold">Layanan</p>
+                                <h3 class="mt-2 text-lg font-black text-gray-900">Apakah bisa custom desain atau ukuran khusus?</h3>
+                            </div>
+                            <i class="fas fa-chevron-down text-indigo-600 text-xl"></i>
+                        </button>
+                        <div class="faq-answer hidden px-6 pb-6 bg-indigo-50 text-gray-700 border-t border-indigo-100">
+                            <p class="py-4">Ya, kami menerima pesanan custom desain dan ukuran. Konsultasikan desain Anda melalui WhatsApp, lalu tim kami akan memberikan estimasi harga dan waktu pengerjaan khusus.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item rounded-[2rem] border border-indigo-100 bg-white shadow-xl overflow-hidden">
+                        <button type="button" aria-expanded="false" onclick="toggleFaq(this)" class="w-full px-6 py-5 flex items-start justify-between gap-4 text-left transition hover:bg-indigo-50">
+                            <div>
+                                <p class="text-sm uppercase tracking-[0.3em] text-indigo-600 font-bold">Pengiriman</p>
+                                <h3 class="mt-2 text-lg font-black text-gray-900">Berapa lama proses dan pengirimannya?</h3>
+                            </div>
+                            <i class="fas fa-chevron-down text-indigo-600 text-xl"></i>
+                        </button>
+                        <div class="faq-answer hidden px-6 pb-6 bg-indigo-50 text-gray-700 border-t border-indigo-100">
+                            <p class="py-4">Setelah pemesanan dikonfirmasi, proses packing dan pengiriman biasanya 1-2 hari kerja. Estimasi tiba adalah 1-3 hari untuk Jawa dan 3-7 hari untuk luar Jawa, tergantung lokasi.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item rounded-[2rem] border border-indigo-100 bg-white shadow-xl overflow-hidden">
+                        <button type="button" aria-expanded="false" onclick="toggleFaq(this)" class="w-full px-6 py-5 flex items-start justify-between gap-4 text-left transition hover:bg-indigo-50">
+                            <div>
+                                <p class="text-sm uppercase tracking-[0.3em] text-indigo-600 font-bold">Garansi</p>
+                                <h3 class="mt-2 text-lg font-black text-gray-900">Bagaimana jika produk tidak sesuai atau rusak?</h3>
+                            </div>
+                            <i class="fas fa-chevron-down text-indigo-600 text-xl"></i>
+                        </button>
+                        <div class="faq-answer hidden px-6 pb-6 bg-indigo-50 text-gray-700 border-t border-indigo-100">
+                            <p class="py-4">Kami menerima retur dalam 7 hari kerja jika terjadi cacat produksi atau produk tidak sesuai pesanan. Kirimkan foto produk, lalu tim kami akan membantu proses penukaran atau pengembalian.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item rounded-[2rem] border border-indigo-100 bg-white shadow-xl overflow-hidden">
+                        <button type="button" aria-expanded="false" onclick="toggleFaq(this)" class="w-full px-6 py-5 flex items-start justify-between gap-4 text-left transition hover:bg-indigo-50">
+                            <div>
+                                <p class="text-sm uppercase tracking-[0.3em] text-indigo-600 font-bold">Biaya</p>
+                                <h3 class="mt-2 text-lg font-black text-gray-900">Apakah ongkir dan asuransi sudah termasuk?</h3>
+                            </div>
+                            <i class="fas fa-chevron-down text-indigo-600 text-xl"></i>
+                        </button>
+                        <div class="faq-answer hidden px-6 pb-6 bg-indigo-50 text-gray-700 border-t border-indigo-100">
+                            <p class="py-4">Ongkir biasanya dihitung terpisah kecuali ada promo gratis ongkir. Semua paket kami lindungi dengan asuransi agar sampai aman, sehingga Anda tetap nyaman berbelanja.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5b. MEDIA SOSIAL -->
     <section class="bg-white border-t border-gray-200">
         <div class="container mx-auto px-4 py-10 text-center">
             <h2 class="text-2xl font-black text-gray-900 mb-4">Ikuti Kami</h2>
@@ -87,22 +399,42 @@
                     <i class="fab fa-tiktok text-xl"></i>
                     <span>TikTok</span>
                 </a>
+                <a href="https://maps.app.goo.gl/wbQVHG7zEWx13ukq9" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-black text-black hover:bg-gray-100 transition">
+                    <i class="fab fa-maps text-xl"></i>
+                    <span>Google Maps</span>
                 </a>
             </div>
         </div>
     </section>
+
+    <!-- FLOATING WHATSAPP BUTTON -->
+    <a href="https://wa.me/628111317166" target="_blank" class="fixed bottom-8 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110 animate-bounce">
+        <i class="fab fa-whatsapp text-2xl"></i>
+    </a>
 
     <!-- 6. MODAL DETAIL PRODUK -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative">
             <button onclick="closeDetail()" class="absolute top-4 right-4 bg-white/90 text-gray-800 w-10 h-10 rounded-full flex items-center justify-center text-2xl z-10 shadow-lg">&times;</button>
             <img id="detail-img" src="" class="w-full h-72 object-cover">
+            <div id="detail-thumbnails" class="flex gap-3 p-4 overflow-x-auto bg-gray-50"></div>
             <div class="p-6">
                 <span id="detail-cat" class="text-indigo-600 text-xs font-bold uppercase tracking-widest"></span>
                 <h3 id="detail-title" class="text-2xl font-black text-gray-800 mt-1"></h3>
                 <p id="detail-price" class="text-2xl font-bold text-indigo-700 mt-2"></p>
                 <div class="my-4 border-t border-gray-100 pt-4">
                     <p class="text-gray-600 text-sm leading-relaxed" id="detail-desc"></p>
+                </div>
+                <div class="mb-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                    <p class="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wider">Bagikan ke:</p>
+                    <div class="flex gap-3 justify-center">
+                        <button onclick="shareToWhatsApp()" class="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition text-sm">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button onclick="shareToInstagram()" class="flex-1 flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-xl font-semibold transition text-sm">
+                            <i class="fab fa-instagram"></i> Instagram
+                        </button>
+                    </div>
                 </div>
                 <button id="detail-add-btn" class="w-full bg-gray-900 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 shadow-lg">
                     <i class="fas fa-cart-plus"></i> Tambahkan ke Keranjang
@@ -111,12 +443,60 @@
         </div>
     </div>
 
-    <!-- 6. MODAL KERANJANG -->
-    <div id="cart-modal" class="fixed inset-0 bg-black/60 z-[110] hidden flex justify-end">
+    <div id="wishlist-modal" class="fixed inset-0 bg-black/60 z-[110] hidden flex justify-end">
         <div class="w-full max-w-md bg-white h-full flex flex-col shadow-2xl">
             <div class="p-5 bg-indigo-900 text-white flex justify-between items-center">
-                <h3 class="font-bold text-xl flex items-center gap-2"><i class="fas fa-shopping-cart text-yellow-400"></i> Keranjang</h3>
-                <button onclick="toggleCart()" class="text-3xl">&times;</button>
+                <h3 class="font-bold text-xl flex items-center gap-2"><i class="fas fa-heart text-pink-400"></i> Favorit</h3>
+                <button onclick="toggleWishlist()" class="text-3xl">&times;</button>
+            </div>
+            <div id="wishlist-items" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                <!-- Item favorit masuk ke sini -->
+            </div>
+            <div class="p-6 border-t bg-white">
+                <button onclick="toggleCart(); toggleWishlist();" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-xl transition-all">
+                    <i class="fas fa-shopping-bag text-2xl"></i> Buka Keranjang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="zoom-overlay" onclick="closeZoom()">
+        <img id="zoom-img" src="" alt="Gambar diperbesar" onclick="event.stopPropagation()">
+    </div>
+
+    <div id="clear-toast" class="fixed bottom-5 right-5 z-[120] hidden flex items-center gap-3 rounded-3xl bg-white p-4 shadow-2xl border border-gray-200 text-gray-900">
+        <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+        <div>
+            <p class="font-semibold">Keranjang berhasil dikosongkan</p>
+            <p class="text-xs text-gray-500">Semua item telah dihapus.</p>
+        </div>
+    </div>
+
+    <!-- 6. MODAL KERANJANG -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/60 z-[110] hidden flex justify-end">
+        <div class="relative w-full max-w-md bg-white h-full flex flex-col shadow-2xl">
+            <div class="p-5 bg-indigo-900 text-white flex justify-between items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-shopping-cart text-yellow-400"></i>
+                    <h3 class="font-bold text-xl">Keranjang</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="promptClearCart()" class="px-3 py-2 bg-red-500 hover:bg-red-600 rounded-full text-sm font-semibold">Kosongkan</button>
+                    <button onclick="toggleCart()" class="text-3xl">&times;</button>
+                </div>
+            </div>
+            <div id="clear-confirm" class="absolute inset-0 hidden items-center justify-center bg-black/50 p-4">
+                <div class="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl border border-gray-200">
+                    <div class="mb-4 inline-flex items-center justify-center rounded-full bg-yellow-100 text-yellow-600 w-16 h-16 mx-auto">
+                        <i class="fas fa-exclamation-triangle text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-gray-900 mb-2">Kosongkan Keranjang?</h4>
+                    <p class="text-gray-600 mb-6">Semua item yang ada di keranjang akan dihapus. Lanjutkan?</p>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button onclick="hideClearConfirm()" class="px-4 py-2 rounded-full border border-gray-300 text-gray-700">Batal</button>
+                        <button onclick="clearCart()" class="px-4 py-2 rounded-full bg-red-500 text-white hover:bg-red-600">Ya, kosongkan</button>
+                    </div>
+                </div>
             </div>
             <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                 <!-- Item masuk ke sini -->
@@ -148,37 +528,351 @@
                 const priceIdrGram = (priceUsdOunce / ounceToGram) * usdToIdr;
                 const formattedPrice = Math.round(priceIdrGram).toLocaleString('id-ID');
 
-                ticker.innerHTML = `Harga Emas Real-time Hari Ini: <span class="font-black text-white bg-yellow-800 px-2 rounded">Rp ${formattedPrice}/gram</span> • Update otomatis setiap 60 detik • Dapatkan penawaran terbaik hari ini hanya di KARYA BARU ! &nbsp;&nbsp;&nbsp;&nbsp;`;
+                ticker.innerText = `Rp ${formattedPrice}/gram`;
             } catch (error) {
-                ticker.innerText = "Gagal memuat harga emas. Silakan periksa koneksi internet Anda.";
+                ticker.innerHTML = `<span class="text-xs uppercase tracking-[0.35em] text-white/70">Harga Emas Real-time</span><span class="block mt-3 text-sm text-white/80">Gagal memuat harga emas. Silakan periksa koneksi internet Anda.</span>`;
             }
         }
         fetchGoldPrice();
         setInterval(fetchGoldPrice, 60000);
 
         /** --- 2. DATA PRODUK --- **/
-        const products = [
+        let products = [
             { 
-                id: 1, category: "Kalung Sultan", name: "Kalung Sultan Kupu-Kupu 25 gram", price: 50000000, image: "img/kupukupu.png",
-                description: "Kalung Sultan dengan desain kupu-kupu mewah dan detail ukiran emas yang halus. Cocok untuk acara istimewa Emas 700 dengan berat 25 gram"
+                id: 1,
+                category: "Kalung Sultan",
+                name: "Kalung Sultan Kupu-Kupu 25 gram",
+                price: 50000000,
+                images: ["img/kupukupu.png"],
+                emas: "700",
+                berat: "25 gram",
+                description: "Kalung Sultan dengan desain kupu-kupu mewah dan detail ukiran emas yang halus. Cocok untuk acara istimewa."
             },
-                        { 
-                id: 2, category: "Kalung Sultan", name: "Kalung Sultan 23,7 gram", price: 28440000, image: "img/kalungsultan.png",
-                description: "Kalung Sultan dengan desain mewah dan detail ukiran emas yang halus. Cocok untuk acara istimewa Emas 420 dengan berat 23,7 gram"
+            { 
+                id: 2,
+                category: "Kalung Sultan",
+                name: "Kalung Sultan 23,7 gram",
+                price: 28440000,
+                images: ["img/kalungsultan1.png", "img/kalungsultan2.png" ,"img/kalungsultan3.png"],
+                emas: "420",
+                berat: "23.7 gram",
+                description: "Kalung Sultan dengan desain mewah dan detail ukiran emas yang halus. Cocok untuk acara istimewa."
+            },
+            { 
+                id: 3,
+                category: "Gelang",
+                name: "Gelang Fusion SS",
+                price: 6000000,
+                images: ["img/gelangfusionss.png",],
+                emas: "420",
+                berat: "5 gram",
+                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 4,
+                category: "Gelang",
+                name: "Gelang Fusion LM",
+                price: 6000000,
+                images: ["img/Gelang Fusion LM.png",],
+                emas: "420",
+                berat: "5 gram",
+                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 5,
+                category: "Gelang",
+                name: "Gelang Fusion Bunga",
+                price: 7200000,
+                images: ["img/Gelang Fusion Bunga3.png", "img/Gelang Fusion Bunga2.png" ,"img/Gelang Fusion Bunga1.png"],
+                emas: "420",
+                berat: "6 gram",
+                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 6,
+                category: "Gelang",
+                name: "Gelang Fusion Pita",
+                price: 22700000,
+                images: ["img/Gelang Fusion Pita1.png", "img/Gelang Fusion Pita2.png" ,],
+                emas: "700",
+                berat: "11,35 gram",
+                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 7,
+                category: "Gelang",
+                name: "Gelang Tikar",
+                price: 25480000,
+                images: ["img/Gelang Tikar1.png", "img/Gelang Tikar2.png" , "img/Gelang Tikar3.png"],
+                emas: "23",
+                berat: "10,4 gram",
+                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 8,
+                category: "Gelang",
+                name: "Gelang Boba",
+                price: 47701500,
+                images: ["img/Gelang Boba1.png", "img/Gelang Boba2.png" , "img/Gelang Boba3.png"],
+                emas: "23",
+                berat: "19,47 gram",
+                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+             {
+                id: 9,
+                category: "Gelang Borobudur",
+                name: "Gelang Borobudur",
+                price: 50000000,
+                images: ["img/Gelang Borobudur1.png",],
+                emas: "700",
+                berat: "25 gram",
+                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 10,
+                category: "Gelang Kusion Bunga",
+                name: "Gelang Kusion Bunga",
+                price: 28440000,
+                images: ["img/Gelang Kusion Bunga1.png", "img/Gelang Kusion Bunga2.png" ,"img/Gelang Kusion Bunga3.png"],
+                emas: "700",
+                berat: "14,22 gram",
+                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
             },
         ];
 
+        // Load saved products from localStorage (if any)
+        const STORAGE_KEY = 'products_karyabaru';
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length) products = parsed;
+            }
+        } catch (e) {
+            console.warn('Gagal memuat produk dari localStorage', e);
+        }
+
         let cart = [];
+        let wishlist = [];
+        const CART_KEY = 'cart_karyabaru';
+        const WISHLIST_KEY = 'wishlist_karyabaru';
+        let currentCategory = 'Semua';
+        let currentSearch = '';
+        let currentSort = 'default';
+        let currentMinWeight = 0;
+        let currentMaxWeight = 0;
+
+        function loadWishlist() {
+            try {
+                const stored = localStorage.getItem(WISHLIST_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) wishlist = parsed;
+                }
+            } catch (e) {
+                console.warn('Gagal memuat wishlist dari localStorage', e);
+            }
+        }
+
+        function saveWishlist() {
+            try {
+                localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
+            } catch (e) {
+                console.warn('Gagal menyimpan wishlist ke localStorage', e);
+            }
+        }
+
+        function loadCart() {
+            try {
+                const stored = localStorage.getItem(CART_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) cart = parsed.map(item => {
+                        const product = products.find(p => p.id === item.id);
+                        return product || item;
+                    });
+                }
+            } catch (e) {
+                console.warn('Gagal memuat cart dari localStorage', e);
+            }
+        }
+
+        function saveCart() {
+            try {
+                localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            } catch (e) {
+                console.warn('Gagal menyimpan cart ke localStorage', e);
+            }
+        }
+
+        function promptClearCart() {
+            const confirmBox = document.getElementById('clear-confirm');
+            if (!confirmBox) return;
+            confirmBox.classList.remove('hidden');
+        }
+
+        function hideClearConfirm() {
+            const confirmBox = document.getElementById('clear-confirm');
+            if (!confirmBox) return;
+            confirmBox.classList.add('hidden');
+        }
+
+        function clearCart() {
+            cart = [];
+            saveCart();
+            updateUI();
+            hideClearConfirm();
+            showClearToast();
+        }
+
+        function showClearToast() {
+            const toast = document.getElementById('clear-toast');
+            if (!toast) return;
+            toast.classList.remove('hidden');
+            toast.classList.add('animate-slide-in');
+            setTimeout(() => {
+                toast.classList.remove('animate-slide-in');
+                toast.classList.add('animate-slide-out');
+            }, 2200);
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('animate-slide-out');
+            }, 2800);
+        }
+
+        function updateWishlistUI() {
+            const count = wishlist.length;
+            const badge = document.getElementById('wishlist-count');
+            const button = document.getElementById('wishlist-button');
+            if (badge) badge.innerText = count;
+            if (button) button.classList.toggle('text-red-400', count > 0);
+        }
+
+        function parseWeight(value) {
+            if (!value) return 0;
+            const num = parseFloat(String(value).replace(',', '.'));
+            return Number.isFinite(num) ? num : 0;
+        }
+
+        function applyFilters() {
+            const searchInput = document.getElementById('search-input');
+            const sortSelect = document.getElementById('sort-select');
+            const minWeightInput = document.getElementById('min-weight');
+            const maxWeightInput = document.getElementById('max-weight');
+
+            currentSearch = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            currentSort = sortSelect ? sortSelect.value : 'default';
+            currentMinWeight = minWeightInput ? parseWeight(minWeightInput.value) : 0;
+            currentMaxWeight = maxWeightInput ? parseWeight(maxWeightInput.value) : 0;
+            renderProducts();
+        }
+
+        function toggleWishlist() {
+            const modal = document.getElementById('wishlist-modal');
+            if (!modal) return;
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) showWishlistItems();
+        }
+
+        function isFavorite(id) {
+            return wishlist.includes(id);
+        }
+
+        function addToWishlist(id) {
+            if (!wishlist.includes(id)) {
+                wishlist.push(id);
+                saveWishlist();
+                updateWishlistUI();
+                renderProducts();
+            }
+        }
+
+        function removeFromWishlist(id) {
+            const index = wishlist.indexOf(id);
+            if (index !== -1) {
+                wishlist.splice(index, 1);
+                saveWishlist();
+                updateWishlistUI();
+                renderProducts();
+                showWishlistItems();
+            }
+        }
+
+        function toggleFavorite(id) {
+            if (isFavorite(id)) {
+                removeFromWishlist(id);
+            } else {
+                addToWishlist(id);
+            }
+        }
+
+        function showWishlistItems() {
+            const list = document.getElementById('wishlist-items');
+            if (!list) return;
+
+            if (wishlist.length === 0) {
+                list.innerHTML = '<div class="text-center py-20 text-gray-500"><i class="fas fa-heart-broken text-5xl mb-4"></i><p>Belum ada produk favorit.</p></div>';
+                return;
+            }
+
+            const items = wishlist.map(id => products.find(p => p.id === id)).filter(Boolean);
+            list.innerHTML = items.map((p, i) => `
+                <div class="flex gap-4 bg-white p-3 rounded-2xl items-center border border-gray-100 shadow-sm">
+                    <img src="${getProductImages(p)[0]}" class="w-16 h-16 object-cover rounded-xl">
+                    <div class="flex-1">
+                        <p class="text-xs font-bold text-gray-800">${p.name}</p>
+                        <p class="text-sm text-indigo-700 font-black">Rp ${p.price.toLocaleString('id-ID')}</p>
+                    </div>
+                    <button onclick="removeFromWishlist(${p.id})" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash-alt"></i></button>
+                </div>`).join('');
+        }
 
         /** --- 3. LOGIKA CATALOG --- **/
-        function renderProducts(cat = 'Semua') {
-            const list = document.getElementById('product-list');
-            const filtered = cat === 'Semua' ? products : products.filter(p => p.category === cat);
+        function getProductImages(product) {
+            return Array.isArray(product.images) ? product.images : [product.image || ''];
+        }
 
-            list.innerHTML = filtered.map(p => `
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group">
+        function renderProducts() {
+            const list = document.getElementById('product-list');
+            let filtered = currentCategory === 'Semua' ? [...products] : products.filter(p => p.category === currentCategory);
+
+            if (currentSearch) {
+                filtered = filtered.filter(p => {
+                    const text = `${p.name} ${p.category} ${p.description} ${p.emas} ${p.berat}`.toLowerCase();
+                    return text.includes(currentSearch);
+                });
+            }
+
+            if (currentMinWeight > 0 || currentMaxWeight > 0) {
+                filtered = filtered.filter(p => {
+                    const weight = parseWeight(p.berat);
+                    if (currentMinWeight > 0 && weight < currentMinWeight) return false;
+                    if (currentMaxWeight > 0 && weight > currentMaxWeight) return false;
+                    return true;
+                });
+            }
+
+            if (currentSort === 'price-asc') {
+                filtered.sort((a, b) => a.price - b.price);
+            } else if (currentSort === 'price-desc') {
+                filtered.sort((a, b) => b.price - a.price);
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="col-span-full text-center py-20 text-gray-500">Tidak ada produk sesuai pencarian atau filter.</div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(p => {
+                const mainImage = getProductImages(p)[0];
+                const favoriteClass = isFavorite(p.id) ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-black/50 text-white hover:bg-black';
+                return `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group relative">
+                    <button type="button" onclick="toggleFavorite(${p.id}); event.stopPropagation();" class="absolute top-3 right-3 ${favoriteClass} w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition">
+                        <i class="fas fa-heart"></i>
+                    </button>
                     <div class="relative overflow-hidden aspect-square cursor-pointer" onclick="openDetail(${p.id})">
-                        <img src="${p.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <img src="${mainImage}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                             <span class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-xs shadow-lg">Lihat Detail</span>
                         </div>
@@ -191,12 +885,13 @@
                             + Keranjang
                         </button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function filterProduct(cat) {
-            renderProducts(cat);
+            currentCategory = cat;
+            renderProducts();
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 if(btn.innerText === cat) {
                     btn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
@@ -209,13 +904,29 @@
         }
 
         /** --- 4. LOGIKA DETAIL PRODUK --- **/
+        function setDetailImage(src, button) {
+            document.getElementById('detail-img').src = src;
+            document.querySelectorAll('#detail-thumbnails button').forEach(btn => btn.classList.remove('ring-2', 'ring-indigo-600'));
+            if (button) button.classList.add('ring-2', 'ring-indigo-600');
+        }
+
         function openDetail(id) {
             const p = products.find(item => item.id === id);
-            document.getElementById('detail-img').src = p.image;
+            const images = getProductImages(p);
+            const firstImage = images[0] || '';
+
+            document.getElementById('detail-img').src = firstImage;
+            document.getElementById('detail-img').onclick = () => openZoom(document.getElementById('detail-img').src);
             document.getElementById('detail-title').innerText = p.name;
             document.getElementById('detail-price').innerText = `Rp ${p.price.toLocaleString('id-ID')}`;
-            document.getElementById('detail-desc').innerText = p.description;
+            document.getElementById('detail-desc').innerHTML = `${p.description}<br><br><strong>Emas:</strong> ${p.emas || '-'}<br><strong>Berat:</strong> ${p.berat || '-'}`;
             document.getElementById('detail-cat').innerText = p.category;
+
+            document.getElementById('detail-thumbnails').innerHTML = images.map((img, index) => `
+                <button type="button" onclick="setDetailImage('${img}', this)" class="rounded-xl overflow-hidden border border-gray-200 ${index === 0 ? 'ring-2 ring-indigo-600' : ''}">
+                    <img src="${img}" class="w-20 h-20 object-cover">
+                </button>
+            `).join('');
             
             document.getElementById('detail-add-btn').onclick = function() {
                 addToCart(p.id);
@@ -231,10 +942,22 @@
             document.body.classList.remove('modal-active');
         }
 
+        function openZoom(src) {
+            const overlay = document.getElementById('zoom-overlay');
+            document.getElementById('zoom-img').src = src;
+            overlay.classList.add('active');
+        }
+
+        function closeZoom() {
+            const overlay = document.getElementById('zoom-overlay');
+            overlay.classList.remove('active');
+        }
+
         /** --- 5. LOGIKA KERANJANG --- **/
         function addToCart(id) {
             const p = products.find(item => item.id === id);
             cart.push(p);
+            saveCart();
             updateUI();
             
             // Notifikasi simpel
@@ -266,7 +989,7 @@
                 total += p.price;
                 return `
                 <div class="flex gap-4 bg-white p-3 rounded-2xl items-center border border-gray-100 shadow-sm">
-                    <img src="${p.image}" class="w-16 h-16 object-cover rounded-xl">
+                    <img src="${getProductImages(p)[0]}" class="w-16 h-16 object-cover rounded-xl">
                     <div class="flex-1">
                         <p class="text-xs font-bold text-gray-800">${p.name}</p>
                         <p class="text-sm text-indigo-700 font-black">Rp ${p.price.toLocaleString('id-ID')}</p>
@@ -279,6 +1002,7 @@
 
         function remove(i) {
             cart.splice(i, 1);
+            saveCart();
             updateUI();
         }
 
@@ -296,7 +1020,7 @@
             
             let total = 0;
             cart.forEach((p, i) => {
-             const imageUrl = new URL(p.image, document.baseURI).href;
+                const imageUrl = new URL(getProductImages(p)[0], document.baseURI).href;
                 text += `${i+1}. *${p.name}*\n   Harga: Rp ${p.price.toLocaleString('id-ID')}\n`;
                 total += p.price;
             });
@@ -308,6 +1032,58 @@
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
+        /** --- 7. SHARE PRODUK --- **/
+        function shareToWhatsApp() {
+            const product = products.find(p => document.getElementById('detail-modal').dataset.productId == p.id || (document.getElementById('detail-title') && document.getElementById('detail-title').innerText === p.name));
+            if (!product) {
+                const title = document.getElementById('detail-title').innerText;
+                const productData = products.find(p => p.name === title);
+                if (productData) {
+                    const message = `Hai! Saya tertarik dengan produk ini:\n\n*${productData.name}*\nHarga: Rp ${productData.price.toLocaleString('id-ID')}\nBerat: ${productData.berat}\nEmas: ${productData.emas}\n\nApa ada stok? Bisa di-order?`;
+                    window.open(`https://wa.me/628111317166?text=${encodeURIComponent(message)}`, '_blank');
+                }
+                return;
+            }
+            const message = `Hai! Saya tertarik dengan produk ini:\n\n*${product.name}*\nHarga: Rp ${product.price.toLocaleString('id-ID')}\nBerat: ${product.berat}\nEmas: ${product.emas}\n\nApa ada stok? Bisa di-order?`;
+            window.open(`https://wa.me/628111317166?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function shareToInstagram() {
+            const instagramProfile = "https://instagram.com/tokoemas_karyabaru";
+            const title = document.getElementById('detail-title').innerText;
+            alert(`Kunjungi Instagram kami untuk melihat produk ini dan konten menarik lainnya: ${instagramProfile}`);
+            window.open(instagramProfile, '_blank');
+        }
+
+        /** --- 8. TOGGLE FAQ --- **/
+        function toggleFaq(button) {
+            const faqItem = button.closest('.faq-item');
+            if (!faqItem) return;
+
+            const answer = faqItem.querySelector('.faq-answer');
+            if (!answer) return;
+
+            const icon = button.querySelector('i.fas.fa-chevron-down');
+            const isHidden = answer.classList.contains('hidden');
+
+            // Close all other FAQs
+            document.querySelectorAll('.faq-answer').forEach(item => item.classList.add('hidden'));
+            document.querySelectorAll('.faq-item button i.fas.fa-chevron-down').forEach(iconItem => iconItem.classList.remove('rotate-180'));
+            document.querySelectorAll('.faq-item button').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+
+            if (isHidden) {
+                answer.classList.remove('hidden');
+                button.setAttribute('aria-expanded', 'true');
+                if (icon) icon.classList.add('rotate-180');
+            } else {
+                button.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        loadWishlist();
+        updateWishlistUI();
+        loadCart();
+        updateUI();
         // Inisialisasi Produk
         renderProducts();
     </script>
