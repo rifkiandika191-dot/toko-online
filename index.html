@@ -3,118 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Katalog Toko Online</title>
-    <!-- Framework CSS (Tailwind) -->
+    <title>KARYABARU - Katalog Perhiasan & Logam Mulia</title>
+    <!-- Framework & Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Custom scrollbar agar cantik */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-marquee {
+            display: inline-block;
+            animation: marquee 20s linear infinite;
+            white-space: nowrap;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .modal-active { overflow: hidden; }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-gray-50 text-gray-800 font-sans">
 
-    <!-- HEADER / NAVBAR -->
-    <nav class="bg-indigo-600 text-white shadow-lg sticky top-0 z-50">
+    <!-- 1. LIVE GOLD PRICE TICKER -->
+    <div class="bg-yellow-500 text-yellow-950 py-1.5 overflow-hidden border-b border-yellow-600 shadow-sm sticky top-0 z-[60]">
+        <div class="container mx-auto px-4 flex items-center">
+            <span class="bg-yellow-800 text-white text-[10px] font-bold px-2 py-0.5 rounded mr-3 z-10 shadow-sm">LIVE</span>
+            <div class="flex-1 overflow-hidden">
+                <p id="gold-ticker" class="text-sm font-bold animate-marquee">
+                    Menghubungkan ke Gold-API untuk mengambil harga emas dunia terbaru...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. NAVBAR -->
+    <nav class="bg-indigo-900 text-white shadow-md sticky top-[36px] z-50">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="bg-white text-indigo-600 p-1.5 rounded-lg">
-                    <i class="fas fa-store text-xl"></i>
-                </div>
-                <span class="text-xl font-bold tracking-tight uppercase">Toko<span class="text-indigo-200">Keren</span></span>
+            <div class="flex items-center gap-2 cursor-pointer" onclick="filterProduct('Semua')">
+                <i class="fas fa-gem text-yellow-400 text-2xl"></i>
+                <span class="text-xl font-black tracking-tighter uppercase">KARYA<span class="text-yellow-400">BARU</span></span>
             </div>
             
-            <!-- Tombol Keranjang Floating -->
-            <button onclick="toggleCart()" class="relative p-2 bg-indigo-700 hover:bg-indigo-800 rounded-full transition">
+            <button onclick="toggleCart()" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition">
                 <i class="fas fa-shopping-bag text-xl"></i>
-                <span id="cart-count" class="absolute -top-1 -right-1 bg-yellow-400 text-indigo-900 text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
             </button>
         </div>
     </nav>
 
-    <!-- BANNER PROMO -->
-    <header class="bg-indigo-700 text-white py-8 px-4 text-center">
-        <h2 class="text-2xl md:text-4xl font-extrabold mb-2">Koleksi Terbaru 2024</h2>
-        <p class="text-indigo-100 text-sm md:text-base">Belanja mudah, tinggal pilih dan klik pesan lewat WhatsApp!</p>
-    </header>
+    <!-- 3. KATEGORI -->
+    <div class="bg-white border-b sticky top-[88px] z-40">
+        <div class="container mx-auto px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar">
+            <button onclick="filterProduct('Semua')" class="cat-btn flex-none px-6 py-2 rounded-full bg-indigo-600 text-white text-sm font-bold shadow-md">Semua</button>
+            <button onclick="filterProduct('Kalung')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Kalung</button>
+            <button onclick="filterProduct('Cincin')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Cincin</button>
+            <button onclick="filterProduct('Anting')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Anting</button>
+            <button onclick="filterProduct('Kalung Sultan')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Kalung Sultan</button>
 
-    <!-- FILTER KATEGORI -->
-    <div class="sticky top-[60px] bg-white/80 backdrop-blur-md z-40 border-b">
-        <div class="container mx-auto px-4 py-4 flex gap-3 overflow-x-auto no-scrollbar">
-            <button onclick="filterProduct('Semua')" class="cat-btn flex-none px-6 py-2 rounded-full bg-indigo-600 text-white font-semibold shadow-md">Semua</button>
-            <button onclick="filterProduct('Pakaian')" class="cat-btn flex-none px-6 py-2 rounded-full bg-white border text-gray-600 font-semibold hover:bg-indigo-50">Pakaian</button>
-            <button onclick="filterProduct('Sepatu')" class="cat-btn flex-none px-6 py-2 rounded-full bg-white border text-gray-600 font-semibold hover:bg-indigo-50">Sepatu</button>
-            <button onclick="filterProduct('Aksesoris')" class="cat-btn flex-none px-6 py-2 rounded-full bg-white border text-gray-600 font-semibold hover:bg-indigo-50">Aksesoris</button>
         </div>
     </div>
 
-    <!-- DAFTAR PRODUK -->
+    <!-- 4. DAFTAR PRODUK -->
     <main class="container mx-auto px-4 py-8">
         <div id="product-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-            <!-- Produk akan dimuat otomatis oleh JS -->
+            <!-- Render via JavaScript -->
         </div>
     </main>
 
-    <!-- MODAL KERANJANG -->
-    <div id="cart-modal" class="fixed inset-0 bg-black/60 z-[60] hidden backdrop-blur-sm transition-all shadow-2xl">
-        <div class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col animate-slide-in">
-            <div class="p-4 bg-indigo-600 text-white flex justify-between items-center">
-                <h3 class="text-lg font-bold"><i class="fas fa-shopping-cart mr-2"></i>Keranjang Belanja</h3>
-                <button onclick="toggleCart()" class="text-2xl">&times;</button>
+    <!-- 5. MEDIA SOSIAL -->
+    <section class="bg-white border-t border-gray-200">
+        <div class="container mx-auto px-4 py-10 text-center">
+            <h2 class="text-2xl font-black text-gray-900 mb-4">Ikuti Kami</h2>
+            <p class="text-gray-600 mb-6">Dapatkan update produk terbaru, promo, dan layanan terbaik dari KARYA BARU.</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="https://wa.me/628111317166" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-green-500 text-green-600 hover:bg-green-50 transition">
+                    <i class="fab fa-whatsapp text-xl"></i>
+                    <span>WhatsApp</span>
+                </a>
+                <a href="https://instagram.com/tokoemas_karyabaru" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-pink-500 text-pink-600 hover:bg-pink-50 transition">
+                    <i class="fab fa-instagram text-xl"></i>
+                    <span>Instagram</span>
+                </a>
+                <a href="https://www.tiktok.com/@tk.emaskaryabarugowa" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-black text-black hover:bg-gray-100 transition">
+                    <i class="fab fa-tiktok text-xl"></i>
+                    <span>TikTok</span>
+                </a>
+                </a>
             </div>
-            
-            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4">
-                <!-- Item Keranjang -->
-            </div>
+        </div>
+    </section>
 
-            <div class="p-6 border-t bg-gray-50">
-                <div class="flex justify-between items-center mb-6 text-xl">
-                    <span class="font-medium text-gray-600">Total Harga:</span>
-                    <span id="cart-total" class="font-bold text-indigo-700 text-2xl">Rp 0</span>
+    <!-- 6. MODAL DETAIL PRODUK -->
+    <div id="detail-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative">
+            <button onclick="closeDetail()" class="absolute top-4 right-4 bg-white/90 text-gray-800 w-10 h-10 rounded-full flex items-center justify-center text-2xl z-10 shadow-lg">&times;</button>
+            <img id="detail-img" src="" class="w-full h-72 object-cover">
+            <div class="p-6">
+                <span id="detail-cat" class="text-indigo-600 text-xs font-bold uppercase tracking-widest"></span>
+                <h3 id="detail-title" class="text-2xl font-black text-gray-800 mt-1"></h3>
+                <p id="detail-price" class="text-2xl font-bold text-indigo-700 mt-2"></p>
+                <div class="my-4 border-t border-gray-100 pt-4">
+                    <p class="text-gray-600 text-sm leading-relaxed" id="detail-desc"></p>
                 </div>
-                <button onclick="sendToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg transition flex items-center justify-center gap-3">
-                    <i class="fab fa-whatsapp text-2xl"></i>
-                    Kirim Pesanan Sekarang
+                <button id="detail-add-btn" class="w-full bg-gray-900 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 shadow-lg">
+                    <i class="fas fa-cart-plus"></i> Tambahkan ke Keranjang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. MODAL KERANJANG -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/60 z-[110] hidden flex justify-end">
+        <div class="w-full max-w-md bg-white h-full flex flex-col shadow-2xl">
+            <div class="p-5 bg-indigo-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-xl flex items-center gap-2"><i class="fas fa-shopping-cart text-yellow-400"></i> Keranjang</h3>
+                <button onclick="toggleCart()" class="text-3xl">&times;</button>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                <!-- Item masuk ke sini -->
+            </div>
+            <div class="p-6 border-t bg-white">
+                <div class="flex justify-between text-2xl font-black mb-6">
+                    <span class="text-gray-600">Total:</span>
+                    <span id="cart-total" class="text-indigo-800 text-3xl">Rp 0</span>
+                </div>
+                <button onclick="sendToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-xl transition-all">
+                    <i class="fab fa-whatsapp text-2xl"></i> Pesan via WhatsApp
                 </button>
             </div>
         </div>
     </div>
 
     <script>
-        /** 
-         * DATA PRODUK 
-         * Kamu bisa ganti bagian image: "https://..." menjadi image: "img/namafile.jpg"
-         */
+        /** --- 1. HARGA EMAS REAL-TIME --- **/
+        async function fetchGoldPrice() {
+            const ticker = document.getElementById('gold-ticker');
+            try {
+                const response = await fetch('https://api.gold-api.com/price/XAU');
+                const data = await response.json();
+                
+                const priceUsdOunce = data.price; 
+                const usdToIdr = 17700; // Kurs estimasi USD ke IDR
+                const ounceToGram = 31.1035; 
+
+                const priceIdrGram = (priceUsdOunce / ounceToGram) * usdToIdr;
+                const formattedPrice = Math.round(priceIdrGram).toLocaleString('id-ID');
+
+                ticker.innerHTML = `Harga Emas Real-time Hari Ini: <span class="font-black text-white bg-yellow-800 px-2 rounded">Rp ${formattedPrice}/gram</span> • Update otomatis setiap 60 detik • Dapatkan penawaran terbaik hari ini hanya di KARYA BARU ! &nbsp;&nbsp;&nbsp;&nbsp;`;
+            } catch (error) {
+                ticker.innerText = "Gagal memuat harga emas. Silakan periksa koneksi internet Anda.";
+            }
+        }
+        fetchGoldPrice();
+        setInterval(fetchGoldPrice, 60000);
+
+        /** --- 2. DATA PRODUK --- **/
         const products = [
-            { id: 1, category: "Pakaian", name: "Kemeja Flanel Blue", price: 155000, image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=500" },
-            { id: 2, category: "Sepatu", name: "Sneaker White OG", price: 420000, image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500" },
-            { id: 3, category: "Aksesoris", name: "Jam Tangan Quartz", price: 215000, image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=500" },
-            { id: 4, category: "Aksesoris", name: "Tas Canvas Khaki", price: 185000, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500" },
-            { id: 5, category: "Pakaian", name: "Jaket Parka Olive", price: 299000, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500" },
-            { id: 6, category: "Sepatu", name: "Boot Brown Leather", price: 550000, image: "https://images.unsplash.com/photo-1520639889456-7844bdfd1d2e?w=500" },
+            { 
+                id: 1, category: "Kalung Sultan", name: "Kalung Sultan Kupu-Kupu 25 gram", price: 50000000, image: "img/kupukupu.png",
+                description: "Kalung Sultan dengan desain kupu-kupu mewah dan detail ukiran emas yang halus. Cocok untuk acara istimewa Emas 700 dengan berat 25 gram"
+            },
+                        { 
+                id: 2, category: "Kalung Sultan", name: "Kalung Sultan 23,7 gram", price: 28440000, image: "img/kalungsultan.png",
+                description: "Kalung Sultan dengan desain mewah dan detail ukiran emas yang halus. Cocok untuk acara istimewa Emas 420 dengan berat 23,7 gram"
+            },
         ];
 
         let cart = [];
 
-        // Menampilkan Produk ke HTML
-        function renderProducts(categoryFilter = 'Semua') {
+        /** --- 3. LOGIKA CATALOG --- **/
+        function renderProducts(cat = 'Semua') {
             const list = document.getElementById('product-list');
-            const filtered = categoryFilter === 'Semua' 
-                ? products 
-                : products.filter(p => p.category === categoryFilter);
+            const filtered = cat === 'Semua' ? products : products.filter(p => p.category === cat);
 
             list.innerHTML = filtered.map(p => `
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group">
-                    <div class="relative overflow-hidden aspect-square">
-                        <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                        <div class="absolute top-2 left-2 bg-indigo-600 text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase">${p.category}</div>
+                    <div class="relative overflow-hidden aspect-square cursor-pointer" onclick="openDetail(${p.id})">
+                        <img src="${p.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <span class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-xs shadow-lg">Lihat Detail</span>
+                        </div>
                     </div>
                     <div class="p-4">
-                        <h3 class="font-bold text-gray-800 mb-1 truncate">${p.name}</h3>
-                        <p class="text-indigo-600 font-black text-lg mb-4">Rp ${p.price.toLocaleString('id-ID')}</p>
-                        <button onclick="addToCart(${p.id})" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-600 transition shadow-md">
+                        <p class="text-[10px] text-indigo-600 font-black uppercase tracking-widest mb-1">${p.category}</p>
+                        <h3 class="font-bold text-gray-800 text-sm md:text-base truncate mb-1">${p.name}</h3>
+                        <p class="text-indigo-800 font-black text-lg">Rp ${p.price.toLocaleString('id-ID')}</p>
+                        <button onclick="addToCart(${p.id})" class="w-full mt-3 bg-gray-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition">
                             + Keranjang
                         </button>
                     </div>
@@ -122,97 +195,120 @@
             `).join('');
         }
 
-        // Filter Kategori
         function filterProduct(cat) {
             renderProducts(cat);
-            const btns = document.querySelectorAll('.cat-btn');
-            btns.forEach(btn => {
+            document.querySelectorAll('.cat-btn').forEach(btn => {
                 if(btn.innerText === cat) {
                     btn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-                    btn.classList.remove('bg-white', 'text-gray-600', 'border');
+                    btn.classList.remove('bg-gray-100', 'text-gray-600');
                 } else {
                     btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-                    btn.classList.add('bg-white', 'text-gray-600', 'border');
+                    btn.classList.add('bg-gray-100', 'text-gray-600');
                 }
             });
         }
 
-        // Tambah ke Keranjang
-        function addToCart(id) {
-            const product = products.find(p => p.id === id);
-            cart.push(product);
-            updateCartUI();
+        /** --- 4. LOGIKA DETAIL PRODUK --- **/
+        function openDetail(id) {
+            const p = products.find(item => item.id === id);
+            document.getElementById('detail-img').src = p.image;
+            document.getElementById('detail-title').innerText = p.name;
+            document.getElementById('detail-price').innerText = `Rp ${p.price.toLocaleString('id-ID')}`;
+            document.getElementById('detail-desc').innerText = p.description;
+            document.getElementById('detail-cat').innerText = p.category;
             
-            // Animasi kecil saat tambah
-            const btn = event.target;
-            btn.innerText = "Ditambahkan!";
-            btn.classList.replace('bg-gray-900', 'bg-green-500');
-            setTimeout(() => {
-                btn.innerText = "+ Keranjang";
-                btn.classList.replace('bg-green-500', 'bg-gray-900');
-            }, 800);
+            document.getElementById('detail-add-btn').onclick = function() {
+                addToCart(p.id);
+                closeDetail();
+            };
+            
+            document.getElementById('detail-modal').classList.remove('hidden');
+            document.body.classList.add('modal-active');
         }
 
-        function updateCartUI() {
+        function closeDetail() {
+            document.getElementById('detail-modal').classList.add('hidden');
+            document.body.classList.remove('modal-active');
+        }
+
+        /** --- 5. LOGIKA KERANJANG --- **/
+        function addToCart(id) {
+            const p = products.find(item => item.id === id);
+            cart.push(p);
+            updateUI();
+            
+            // Notifikasi simpel
+            const btn = event.currentTarget;
+            if(btn.id !== 'detail-add-btn') {
+                const originalText = btn.innerText;
+                btn.innerText = "✓ Berhasil";
+                btn.classList.replace('bg-gray-900', 'bg-green-600');
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.replace('bg-green-600', 'bg-gray-900');
+                }, 1000);
+            }
+        }
+
+        function updateUI() {
             document.getElementById('cart-count').innerText = cart.length;
-            const itemsContainer = document.getElementById('cart-items');
-            const totalDisplay = document.getElementById('cart-total');
+            const itemsDiv = document.getElementById('cart-items');
+            const totalDiv = document.getElementById('cart-total');
             
             if(cart.length === 0) {
-                itemsContainer.innerHTML = `<div class="text-center py-20"><i class="fas fa-box-open text-5xl text-gray-200 mb-4"></i><p class="text-gray-400">Keranjang kosong</p></div>`;
-                totalDisplay.innerText = "Rp 0";
+                itemsDiv.innerHTML = `<div class="text-center py-20"><i class="fas fa-shopping-basket text-5xl text-gray-200 mb-4"></i><p class="text-gray-400">Keranjang Kosong</p></div>`;
+                totalDiv.innerText = "Rp 0";
                 return;
             }
 
             let total = 0;
-            itemsContainer.innerHTML = cart.map((item, index) => {
-                total += item.price;
+            itemsDiv.innerHTML = cart.map((p, i) => {
+                total += p.price;
                 return `
-                    <div class="flex items-center gap-4 bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                        <img src="${item.image}" class="w-16 h-16 object-cover rounded-xl">
-                        <div class="flex-1">
-                            <h4 class="font-bold text-sm text-gray-800">${item.name}</h4>
-                            <p class="text-indigo-600 font-bold">Rp ${item.price.toLocaleString('id-ID')}</p>
-                        </div>
-                        <button onclick="removeItem(${index})" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash-alt"></i></button>
+                <div class="flex gap-4 bg-white p-3 rounded-2xl items-center border border-gray-100 shadow-sm">
+                    <img src="${p.image}" class="w-16 h-16 object-cover rounded-xl">
+                    <div class="flex-1">
+                        <p class="text-xs font-bold text-gray-800">${p.name}</p>
+                        <p class="text-sm text-indigo-700 font-black">Rp ${p.price.toLocaleString('id-ID')}</p>
                     </div>
-                `;
+                    <button onclick="remove(${i})" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash-alt"></i></button>
+                </div>`;
             }).join('');
-            totalDisplay.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+            totalDiv.innerText = `Rp ${total.toLocaleString('id-ID')}`;
         }
 
-        function removeItem(index) {
-            cart.splice(index, 1);
-            updateCartUI();
+        function remove(i) {
+            cart.splice(i, 1);
+            updateUI();
         }
 
         function toggleCart() {
             document.getElementById('cart-modal').classList.toggle('hidden');
         }
 
-        // WHATSAPP INTEGRATION
+        /** --- 6. WHATSAPP SENDER --- **/
         function sendToWhatsApp() {
-            if (cart.length === 0) return;
-
-            const WA_NUMBER = "628123456789"; // GANTI DENGAN NOMOR HP KAMU
-            let message = "*ORDER BARU - TOKOKEREN*\n";
-            message += "----------------------------\n\n";
+            if (cart.length === 0) return alert("Keranjang belanja masih kosong!");
+            
+            const WA_NUMBER = "628111317166"; // GANTI DENGAN NOMOR HP KAMU
+            let text = "*PESANAN BARU - KARYABARU*\n";
+            text += "--------------------------------------\n";
             
             let total = 0;
-            cart.forEach((item, index) => {
-                message += `${index + 1}. *${item.name}*\n   Harga: Rp ${item.price.toLocaleString('id-ID')}\n`;
-                total += item.price;
+            cart.forEach((p, i) => {
+             const imageUrl = new URL(p.image, document.baseURI).href;
+                text += `${i+1}. *${p.name}*\n   Harga: Rp ${p.price.toLocaleString('id-ID')}\n`;
+                total += p.price;
             });
-
-            message += "\n----------------------------\n";
-            message += `*TOTAL PEMBAYARAN: Rp ${total.toLocaleString('id-ID')}*\n\n`;
-            message += "Nama Lengkap:\nAlamat:\nNo. HP:";
             
-            const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
+            text += "--------------------------------------\n";
+            text += `*TOTAL PEMBAYARAN: Rp ${total.toLocaleString('id-ID')}*\n\n`;
+            text += "Nama Penerima :\nAlamat Lengkap :\nNo. HP :\n*NOTED: HARGA DAPAT BERUBAH SESUAI HARGA EMAS SAAT PEMESANAN*"
+            
+            window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
-        // Jalankan saat pertama buka
+        // Inisialisasi Produk
         renderProducts();
     </script>
 </body>
