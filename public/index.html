@@ -1080,7 +1080,7 @@
             document.getElementById('detail-title').innerText = p.name;
             document.getElementById('detail-price').innerText = `Rp ${p.price.toLocaleString('id-ID')}`;
                 // render description and include ukuran tepat setelah 'Berat' jika produk cincin memiliki size
-                let descHtml = `${p.description}<br><br><strong>Emas:</strong> ${p.emas || '-'}<br><strong>Karat:</strong> ${p.karat || '-'}<br><strong>Berat:</strong> ${p.berat || '-'}`;
+                let descHtml = `${p.description}<br><br><strong>Emas:</strong> ${p.emas || p.karat || '-'}<br><strong>Berat:</strong> ${p.berat || '-'}`;
                 if (p.category === 'Cincin' && p.size) descHtml += `<br><strong>Ukuran:</strong> ${p.size}`;
                 document.getElementById('detail-desc').innerHTML = descHtml;
 
