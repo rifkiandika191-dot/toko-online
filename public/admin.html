@@ -36,10 +36,6 @@
       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <h1 class="font-black text-lg"><i class="fas fa-gem mr-2"></i>Admin KARYABARU</h1>
         <div class="flex items-center gap-2">
-          <button id="nav-products" onclick="switchView('products')" class="text-sm bg-white/25 px-4 py-2 rounded-full font-bold">Produk</button>
-          <button id="nav-chat" onclick="switchView('chat')" class="relative text-sm bg-white/15 px-4 py-2 rounded-full hover:bg-white/25">Chat
-            <span id="chat-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"></span>
-          </button>
           <button onclick="openSettings()" class="text-sm bg-white/15 px-4 py-2 rounded-full hover:bg-white/25"><i class="fas fa-gear mr-1"></i>Pengaturan</button>
           <a href="index.html" target="_blank" class="text-sm bg-white/15 px-4 py-2 rounded-full hover:bg-white/25">Lihat Toko</a>
           <button onclick="logout()" class="text-sm bg-white/15 px-4 py-2 rounded-full hover:bg-white/25">Keluar</button>
@@ -72,30 +68,6 @@
           <tbody id="rows"></tbody>
         </table>
         <p id="empty" class="hidden text-center text-slate-400 py-10">Belum ada produk.</p>
-      </div>
-    </main>
-
-    <!-- ===== CHAT (LIVE AGENT) ===== -->
-    <main id="view-chat" class="hidden max-w-6xl mx-auto px-4 py-8">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-2xl font-black">Live Chat</h2>
-        <button onclick="loadChats()" class="text-sm bg-slate-200 px-4 py-2 rounded-full font-bold hover:bg-slate-300"><i class="fas fa-rotate mr-1"></i>Muat ulang</button>
-      </div>
-      <div class="grid md:grid-cols-[320px_1fr] gap-4" style="height:70vh;">
-        <div class="bg-white rounded-2xl shadow overflow-y-auto">
-          <div id="chat-list"></div>
-          <p id="chat-list-empty" class="hidden text-center text-slate-400 py-10">Belum ada percakapan.</p>
-        </div>
-        <div class="bg-white rounded-2xl shadow flex flex-col overflow-hidden">
-          <div id="chat-thread-header" class="px-4 py-3 border-b font-bold text-slate-700 hidden"></div>
-          <div id="chat-thread" class="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50 text-sm">
-            <div class="h-full flex items-center justify-center text-slate-400">Pilih percakapan di kiri</div>
-          </div>
-          <div id="chat-reply-row" class="p-3 border-t flex items-center gap-2 hidden">
-            <input id="chat-reply" type="text" placeholder="Tulis balasan..." onkeydown="if(event.key==='Enter')sendReply()" class="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-indigo-500" />
-            <button onclick="sendReply()" class="w-10 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
-          </div>
-        </div>
       </div>
     </main>
 
@@ -223,10 +195,6 @@
           <label class="text-xs font-bold text-slate-500">Teks Promo (banner berjalan)</label>
           <input id="s-promo_text" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="Promo spesial minggu ini..." />
         </div>
-        <div>
-          <label class="text-xs font-bold text-slate-500">Teks Jaminan/Garansi</label>
-          <textarea id="s-warranty_text" rows="2" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="Setiap produk dijamin keaslian..."></textarea>
-        </div>
         <p id="settings-error" class="text-red-500 text-sm hidden"></p>
         <p id="settings-ok" class="text-green-600 text-sm hidden">✓ Tersimpan</p>
       </div>
@@ -277,10 +245,6 @@
       document.getElementById('login-view').classList.add('hidden');
       document.getElementById('app-view').classList.remove('hidden');
       loadProducts();
-      fetch('/api/admin/chats', { headers: authHeaders() })
-        .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d) updateChatBadge(d.totalUnread || 0); })
-        .catch(() => {});
     }
 
     async function openSettings() {
@@ -294,7 +258,6 @@
         document.getElementById('s-hours').value = s.hours || '';
         document.getElementById('s-address').value = s.address || '';
         document.getElementById('s-promo_text').value = s.promo_text || '';
-        document.getElementById('s-warranty_text').value = s.warranty_text || '';
       } catch (e) { /* biarkan kosong */ }
       document.getElementById('settings-modal').classList.remove('hidden');
     }
@@ -311,7 +274,6 @@
         hours: document.getElementById('s-hours').value,
         address: document.getElementById('s-address').value,
         promo_text: document.getElementById('s-promo_text').value,
-        warranty_text: document.getElementById('s-warranty_text').value,
       };
       const r = await fetch('/api/admin/settings', {
         method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
@@ -325,98 +287,6 @@
       }
       ok.classList.remove('hidden');
     }
-
-    function switchView(view) {
-      const isChat = view === 'chat';
-      document.getElementById('view-products').classList.toggle('hidden', isChat);
-      document.getElementById('view-chat').classList.toggle('hidden', !isChat);
-      document.getElementById('nav-products').className =
-        'text-sm px-4 py-2 rounded-full ' + (isChat ? 'bg-white/15 hover:bg-white/25' : 'bg-white/25 font-bold');
-      document.getElementById('nav-chat').className =
-        'relative text-sm px-4 py-2 rounded-full ' + (isChat ? 'bg-white/25 font-bold' : 'bg-white/15 hover:bg-white/25');
-      if (isChat) loadChats();
-    }
-
-    let currentChatId = null;
-    let chatThreadTimer = null;
-
-    function chatEsc(s) {
-      return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    }
-
-    async function loadChats() {
-      const r = await fetch('/api/admin/chats', { headers: authHeaders() });
-      if (r.status === 401) return logout();
-      const d = await r.json();
-      const list = document.getElementById('chat-list');
-      const empty = document.getElementById('chat-list-empty');
-      empty.classList.toggle('hidden', (d.chats || []).length > 0);
-      list.innerHTML = (d.chats || []).map(c => `
-        <button onclick="openChatThread(${c.id})" class="w-full text-left px-4 py-3 border-b hover:bg-slate-50 ${c.id === currentChatId ? 'bg-indigo-50' : ''}">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-sm text-slate-800">${chatEsc(c.name || 'Pengunjung')}</span>
-            ${c.admin_unread > 0 ? `<span class="bg-red-500 text-white text-[10px] font-bold rounded-full px-2 py-0.5">${c.admin_unread}</span>` : ''}
-          </div>
-          <p class="text-xs text-slate-500 truncate">${chatEsc(c.last_text || '')}</p>
-        </button>`).join('');
-      updateChatBadge(d.totalUnread || 0);
-    }
-
-    function updateChatBadge(n) {
-      const b = document.getElementById('chat-badge');
-      if (n > 0) { b.textContent = n; b.classList.remove('hidden'); }
-      else b.classList.add('hidden');
-    }
-
-    function renderThread(messages) {
-      const box = document.getElementById('chat-thread');
-      box.innerHTML = messages.map(m => {
-        const admin = m.sender === 'admin';
-        return `<div class="flex ${admin ? 'justify-end' : 'justify-start'}">
-          <div class="${admin ? 'bg-indigo-600 text-white' : 'bg-white text-slate-800 border'} rounded-2xl px-3 py-2 max-w-[75%] shadow-sm">${chatEsc(m.text)}</div>
-        </div>`;
-      }).join('') || '<div class="h-full flex items-center justify-center text-slate-400">Belum ada pesan</div>';
-      box.scrollTop = box.scrollHeight;
-    }
-
-    async function openChatThread(id) {
-      currentChatId = id;
-      document.getElementById('chat-reply-row').classList.remove('hidden');
-      document.getElementById('chat-thread-header').classList.remove('hidden');
-      const r = await fetch('/api/admin/chats/' + id, { headers: authHeaders() });
-      if (r.status === 401) return logout();
-      const d = await r.json();
-      renderThread(d.messages || []);
-      loadChats(); // segarkan unread
-      if (chatThreadTimer) clearInterval(chatThreadTimer);
-      chatThreadTimer = setInterval(async () => {
-        if (!currentChatId) return;
-        const rr = await fetch('/api/admin/chats/' + currentChatId, { headers: authHeaders() });
-        if (rr.ok) renderThread((await rr.json()).messages || []);
-      }, 4000);
-    }
-
-    async function sendReply() {
-      const input = document.getElementById('chat-reply');
-      const text = input.value.trim();
-      if (!text || !currentChatId) return;
-      input.value = '';
-      const r = await fetch('/api/admin/chats/' + currentChatId + '/send', {
-        method: 'POST', headers: authHeaders(), body: JSON.stringify({ text }),
-      });
-      if (r.status === 401) return logout();
-      const rr = await fetch('/api/admin/chats/' + currentChatId, { headers: authHeaders() });
-      if (rr.ok) renderThread((await rr.json()).messages || []);
-    }
-
-    // Polling badge chat (jumlah belum dibaca) selama login.
-    setInterval(async () => {
-      if (!token) return;
-      try {
-        const r = await fetch('/api/admin/chats', { headers: authHeaders() });
-        if (r.ok) updateChatBadge((await r.json()).totalUnread || 0);
-      } catch (e) { /* abaikan */ }
-    }, 12000);
 
     async function loadProducts() {
       const r = await fetch('/api/admin/products', { headers: authHeaders() });

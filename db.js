@@ -55,32 +55,9 @@ async function initSchema() {
       ('store_name', 'KARYABARU'),
       ('hours', ''),
       ('promo_text', 'Harga emas real-time kini tampil lebih menarik di banner promo.'),
-      ('address', ''),
-      ('warranty_text', 'Setiap produk dijamin keaslian emas dan kadarnya. Tersedia layanan tukar tambah dan buyback.')
+      ('address', '')
      ON CONFLICT (key) DO NOTHING`,
   );
-
-  // Live chat: percakapan pengunjung & pesan.
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS chats (
-      id           SERIAL PRIMARY KEY,
-      visitor_id   TEXT UNIQUE NOT NULL,
-      name         TEXT,
-      created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-      last_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-      admin_unread INTEGER NOT NULL DEFAULT 0
-    );
-  `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS chat_messages (
-      id         SERIAL PRIMARY KEY,
-      chat_id    INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
-      sender     TEXT NOT NULL,
-      text       TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-  `);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_chat_messages_chat ON chat_messages(chat_id, id)`);
 }
 
 // Ambil data awal dari public/products.js (window.PRODUCTS).

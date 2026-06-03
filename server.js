@@ -220,7 +220,7 @@ app.post('/api/upload', requireAuth, (req, res) => {
 });
 
 // ---------- Pengaturan toko ----------
-const ALLOWED_SETTINGS = ['whatsapp', 'store_name', 'hours', 'promo_text', 'address', 'warranty_text'];
+const ALLOWED_SETTINGS = ['whatsapp', 'store_name', 'hours', 'promo_text', 'address'];
 
 // Publik: ambil pengaturan toko (dipakai etalase untuk nomor WA dll)
 app.get('/api/settings', async (req, res) => {
@@ -254,108 +254,6 @@ app.put('/api/admin/settings', requireAuth, async (req, res) => {
   } catch (e) {
     console.error('[PUT /api/admin/settings]', e.message);
     res.status(500).json({ error: 'Gagal menyimpan pengaturan' });
-  }
-});
-
-// ---------- Live chat ----------
-function cleanText(t) {
-  return String(t || '').trim().slice(0, 2000);
-}
-
-// Pengunjung: kirim pesan
-app.post('/api/chat/send', async (req, res) => {
-  const b = req.body || {};
-  const visitorId = String(b.visitor_id || '').trim().slice(0, 64);
-  const text = cleanText(b.text);
-  const name = b.name ? String(b.name).trim().slice(0, 80) : null;
-  if (!visitorId || !text) return res.status(400).json({ error: 'Data tidak lengkap' });
-  try {
-    const up = await pool.query(
-      `INSERT INTO chats (visitor_id, name) VALUES ($1,$2)
-       ON CONFLICT (visitor_id) DO UPDATE SET
-         name = COALESCE(EXCLUDED.name, chats.name),
-         last_at = now(), admin_unread = chats.admin_unread + 1
-       RETURNING id`,
-      [visitorId, name],
-    );
-    const chatId = up.rows[0].id;
-    const { rows } = await pool.query(
-      `INSERT INTO chat_messages (chat_id, sender, text) VALUES ($1,'user',$2)
-       RETURNING id, sender, text, created_at`,
-      [chatId, text],
-    );
-    res.status(201).json({ ok: true, message: rows[0] });
-  } catch (e) {
-    console.error('[POST /api/chat/send]', e.message);
-    res.status(500).json({ error: 'Gagal mengirim pesan' });
-  }
-});
-
-// Pengunjung: ambil pesan baru (polling)
-app.get('/api/chat/poll', async (req, res) => {
-  const visitorId = String(req.query.visitor_id || '').trim().slice(0, 64);
-  const afterId = parseInt(req.query.after_id, 10) || 0;
-  if (!visitorId) return res.json({ messages: [] });
-  try {
-    const chat = await pool.query('SELECT id FROM chats WHERE visitor_id=$1', [visitorId]);
-    if (!chat.rows.length) return res.json({ messages: [] });
-    const { rows } = await pool.query(
-      `SELECT id, sender, text, created_at FROM chat_messages
-       WHERE chat_id=$1 AND id>$2 ORDER BY id ASC`,
-      [chat.rows[0].id, afterId],
-    );
-    res.json({ messages: rows });
-  } catch (e) {
-    res.status(500).json({ messages: [] });
-  }
-});
-
-// Admin: daftar percakapan
-app.get('/api/admin/chats', requireAuth, async (req, res) => {
-  try {
-    const { rows } = await pool.query(`
-      SELECT c.id, c.visitor_id, c.name, c.last_at, c.admin_unread,
-        (SELECT text FROM chat_messages m WHERE m.chat_id=c.id ORDER BY m.id DESC LIMIT 1) AS last_text
-      FROM chats c ORDER BY c.last_at DESC LIMIT 100
-    `);
-    const totalUnread = rows.reduce((n, r) => n + (r.admin_unread || 0), 0);
-    res.json({ chats: rows, totalUnread });
-  } catch (e) {
-    res.status(500).json({ error: 'Gagal mengambil chat' });
-  }
-});
-
-// Admin: pesan satu percakapan (sekaligus tandai terbaca)
-app.get('/api/admin/chats/:id', requireAuth, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  if (!id) return res.status(400).json({ error: 'ID tidak valid' });
-  try {
-    await pool.query('UPDATE chats SET admin_unread=0 WHERE id=$1', [id]);
-    const { rows } = await pool.query(
-      'SELECT id, sender, text, created_at FROM chat_messages WHERE chat_id=$1 ORDER BY id ASC',
-      [id],
-    );
-    res.json({ messages: rows });
-  } catch (e) {
-    res.status(500).json({ error: 'Gagal mengambil pesan' });
-  }
-});
-
-// Admin: balas
-app.post('/api/admin/chats/:id/send', requireAuth, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const text = cleanText((req.body || {}).text);
-  if (!id || !text) return res.status(400).json({ error: 'Data tidak lengkap' });
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO chat_messages (chat_id, sender, text) VALUES ($1,'admin',$2)
-       RETURNING id, sender, text, created_at`,
-      [id, text],
-    );
-    await pool.query('UPDATE chats SET last_at=now() WHERE id=$1', [id]);
-    res.status(201).json({ ok: true, message: rows[0] });
-  } catch (e) {
-    res.status(500).json({ error: 'Gagal mengirim balasan' });
   }
 });
 
