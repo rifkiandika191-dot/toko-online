@@ -68,6 +68,7 @@ function rowToProduct(r) {
     stock: r.stock,
     active: r.active,
     badge: r.badge || '',
+    certified: r.certified === true,
   };
 }
 
@@ -93,6 +94,7 @@ function parseProductBody(b) {
     stock: Math.max(0, parseInt(b.stock, 10) || 0),
     active: b.active === false || b.active === 'false' ? false : true,
     badge: ALLOWED_BADGES.includes(b.badge) ? b.badge : '',
+    certified: b.certified === true || b.certified === 'true',
   };
 }
 
@@ -153,10 +155,10 @@ app.post('/api/products', requireAuth, async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      `INSERT INTO products (category,name,price,images,emas,karat,berat,size,description,stock,active,badge)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      `INSERT INTO products (category,name,price,images,emas,karat,berat,size,description,stock,active,badge,certified)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
       [p.category, p.name, p.price, JSON.stringify(p.images), p.emas, p.karat,
-        p.berat, p.size, p.description, p.stock, p.active, p.badge],
+        p.berat, p.size, p.description, p.stock, p.active, p.badge, p.certified],
     );
     res.status(201).json(rowToProduct(rows[0]));
   } catch (e) {
@@ -176,9 +178,9 @@ app.put('/api/products/:id', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `UPDATE products SET category=$1,name=$2,price=$3,images=$4,emas=$5,karat=$6,
-        berat=$7,size=$8,description=$9,stock=$10,active=$11,badge=$12 WHERE id=$13 RETURNING *`,
+        berat=$7,size=$8,description=$9,stock=$10,active=$11,badge=$12,certified=$13 WHERE id=$14 RETURNING *`,
       [p.category, p.name, p.price, JSON.stringify(p.images), p.emas, p.karat,
-        p.berat, p.size, p.description, p.stock, p.active, p.badge, id],
+        p.berat, p.size, p.description, p.stock, p.active, p.badge, p.certified, id],
     );
     if (!rows.length) return res.status(404).json({ error: 'Produk tidak ditemukan' });
     res.json(rowToProduct(rows[0]));
@@ -218,7 +220,7 @@ app.post('/api/upload', requireAuth, (req, res) => {
 });
 
 // ---------- Pengaturan toko ----------
-const ALLOWED_SETTINGS = ['whatsapp', 'store_name', 'hours'];
+const ALLOWED_SETTINGS = ['whatsapp', 'store_name', 'hours', 'promo_text', 'address', 'warranty_text'];
 
 // Publik: ambil pengaturan toko (dipakai etalase untuk nomor WA dll)
 app.get('/api/settings', async (req, res) => {

@@ -171,7 +171,7 @@
     <div class="bg-yellow-500 text-yellow-950 py-1.5 overflow-hidden border-b border-yellow-600 shadow-sm sticky top-0 z-[60]">
         <div class="container mx-auto px-4 flex items-center justify-between">
             <span class="bg-yellow-800 text-white text-[10px] font-bold px-2 py-0.5 rounded mr-3 z-10 shadow-sm">LIVE</span>
-            <p class="text-sm font-bold">Harga emas real-time kini tampil lebih menarik di banner promo.</p>
+            <p id="promo-text" class="text-sm font-bold">Harga emas real-time kini tampil lebih menarik di banner promo.</p>
         </div>
     </div>
 
@@ -483,6 +483,27 @@
         </div>
     </section>
 
+    <!-- 5c. JAMINAN & INFO TOKO -->
+    <section class="bg-indigo-50 border-t border-gray-200">
+        <div class="container mx-auto px-4 py-10 grid gap-6 md:grid-cols-3 text-center">
+            <div id="warranty-card" class="bg-white rounded-2xl p-6 shadow-sm border border-indigo-100">
+                <i class="fas fa-shield-halved text-3xl text-indigo-600 mb-3"></i>
+                <h3 class="font-black text-gray-900 mb-1">Jaminan & Keaslian</h3>
+                <p id="warranty-text" class="text-sm text-gray-600">Setiap produk dijamin keaslian emas dan kadarnya.</p>
+            </div>
+            <div id="hours-card" class="bg-white rounded-2xl p-6 shadow-sm border border-indigo-100 hidden">
+                <i class="fas fa-clock text-3xl text-indigo-600 mb-3"></i>
+                <h3 class="font-black text-gray-900 mb-1">Jam Buka</h3>
+                <p id="hours-text" class="text-sm text-gray-600"></p>
+            </div>
+            <div id="address-card" class="bg-white rounded-2xl p-6 shadow-sm border border-indigo-100 hidden">
+                <i class="fas fa-location-dot text-3xl text-indigo-600 mb-3"></i>
+                <h3 class="font-black text-gray-900 mb-1">Alamat Toko</h3>
+                <p id="address-text" class="text-sm text-gray-600"></p>
+            </div>
+        </div>
+    </section>
+
     <!-- FLOATING WHATSAPP BUTTON -->
     <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="fixed bottom-8 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110 animate-bounce">
         <i class="fab fa-whatsapp text-2xl"></i>
@@ -508,6 +529,10 @@
                 <button id="ring-guide-link" onclick="openRingGuide()" class="hidden w-full mt-2 text-indigo-600 text-sm font-semibold hover:underline">
                     <i class="fas fa-ruler-horizontal mr-1"></i> Panduan ukuran cincin
                 </button>
+                <div id="similar-wrap" class="hidden mt-6 pt-4 border-t border-gray-100">
+                    <p class="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">Produk Serupa</p>
+                    <div id="similar-list" class="grid grid-cols-3 gap-2"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -641,14 +666,20 @@
         fetch('/api/settings')
             .then(r => r.ok ? r.json() : Promise.reject())
             .then(s => {
-                if (s && s.whatsapp) {
+                if (!s) return;
+                if (s.whatsapp) {
                     WA_NUMBER = String(s.whatsapp).replace(/[^0-9]/g, '');
                     document.querySelectorAll('a[data-wa="1"]').forEach(a => {
                         a.href = 'https://wa.me/' + WA_NUMBER;
                     });
                 }
+                const setText = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+                setText('promo-text', s.promo_text);
+                setText('warranty-text', s.warranty_text);
+                if (s.hours) { setText('hours-text', s.hours); document.getElementById('hours-card').classList.remove('hidden'); }
+                if (s.address) { setText('address-text', s.address); document.getElementById('address-card').classList.remove('hidden'); }
             })
-            .catch(() => { /* pakai nomor default */ });
+            .catch(() => { /* pakai nilai default */ });
         let currentCategory = 'Semua';
         let currentKarat = 'Semua';
         let currentSearch = '';
@@ -790,6 +821,7 @@
                         <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">${p.karat}</p>
                         <h3 class="font-bold text-gray-800 text-sm md:text-base truncate mb-1">${p.name}</h3>
                         <p class="text-indigo-800 font-black text-lg">Rp ${p.price.toLocaleString('id-ID')}</p>
+                        ${p.certified ? '<p class="text-[10px] text-green-600 font-bold mt-0.5"><i class="fas fa-shield-halved"></i> Bersertifikat</p>' : ''}
                         ${btnHtml}
                     </div>
                 </div>`;
@@ -839,8 +871,10 @@
             {
                 const colors = { 'Baru': 'bg-blue-600', 'Terlaris': 'bg-amber-500', 'Stok Terbatas': 'bg-orange-500', 'Habis': 'bg-gray-500' };
                 const catEl = document.getElementById('detail-cat');
-                catEl.innerHTML = (p.category || '') + (p.badge
-                    ? ` <span class="ml-1 ${colors[p.badge] || 'bg-indigo-600'} text-white text-[10px] px-2 py-0.5 rounded-full align-middle">${p.badge}</span>` : '');
+                let extra = '';
+                if (p.badge) extra += ` <span class="ml-1 ${colors[p.badge] || 'bg-indigo-600'} text-white text-[10px] px-2 py-0.5 rounded-full align-middle">${p.badge}</span>`;
+                if (p.certified) extra += ` <span class="ml-1 bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-full align-middle"><i class="fas fa-shield-halved"></i> Bersertifikat</span>`;
+                catEl.innerHTML = (p.category || '') + extra;
             }
                 // render description and include ukuran tepat setelah 'Berat' jika produk cincin memiliki size
                 let descHtml = `${p.description}<br><br><strong>Emas:</strong> ${p.emas || p.karat || '-'}<br><strong>Berat:</strong> ${p.berat || '-'}`;
@@ -870,9 +904,32 @@
             }
 
             document.getElementById('ring-guide-link').classList.toggle('hidden', p.category !== 'Cincin');
+            renderSimilar(p);
 
             document.getElementById('detail-modal').classList.remove('hidden');
             document.body.classList.add('modal-active');
+        }
+
+        // Tampilkan hingga 3 produk lain dari kategori yang sama.
+        function renderSimilar(p) {
+            const wrap = document.getElementById('similar-wrap');
+            const list = document.getElementById('similar-list');
+            const similar = products
+                .filter(x => x.id !== p.id && (x.category || '') === (p.category || ''))
+                .slice(0, 3);
+            if (!similar.length) { wrap.classList.add('hidden'); return; }
+            list.innerHTML = similar.map(s => {
+                const img = getProductImages(s)[0] || '';
+                return `
+                <button type="button" onclick="openDetail(${s.id})" class="text-left group">
+                    <div class="aspect-square rounded-xl overflow-hidden bg-gray-100">
+                        <img src="${img}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition">
+                    </div>
+                    <p class="text-[11px] font-semibold text-gray-700 truncate mt-1">${s.name}</p>
+                    <p class="text-[11px] text-indigo-700 font-bold">Rp ${Number(s.price).toLocaleString('id-ID')}</p>
+                </button>`;
+            }).join('');
+            wrap.classList.remove('hidden');
         }
 
         function openRingGuide() {

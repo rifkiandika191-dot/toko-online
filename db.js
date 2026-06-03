@@ -39,6 +39,8 @@ async function initSchema() {
 
   // Kolom label/badge produk (Baru/Terlaris/Stok Terbatas/Habis).
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS badge TEXT DEFAULT ''`);
+  // Kolom bersertifikat (jaminan keaslian).
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS certified BOOLEAN NOT NULL DEFAULT false`);
 
   // Pengaturan toko (key-value): nomor WA, nama toko, jam buka, dll.
   await pool.query(`
@@ -51,7 +53,10 @@ async function initSchema() {
     `INSERT INTO settings (key, value) VALUES
       ('whatsapp', '6285157075592'),
       ('store_name', 'KARYABARU'),
-      ('hours', '')
+      ('hours', ''),
+      ('promo_text', 'Harga emas real-time kini tampil lebih menarik di banner promo.'),
+      ('address', ''),
+      ('warranty_text', 'Setiap produk dijamin keaslian emas dan kadarnya. Tersedia layanan tukar tambah dan buyback.')
      ON CONFLICT (key) DO NOTHING`,
   );
 }
