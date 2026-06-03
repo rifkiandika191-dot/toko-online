@@ -648,19 +648,19 @@
 
         /** --- 2. DATA PRODUK --- **/
         // Data produk dimuat dari products.js (window.PRODUCTS). Edit produk DI SANA.
+        // Awalnya pakai products.js sebagai cadangan; lalu coba ambil dari database via API.
         let products = Array.isArray(window.PRODUCTS) ? window.PRODUCTS.slice() : [];
 
-        // Load saved products from localStorage (if any)
-        const STORAGE_KEY = 'products_karyabaru';
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed) && parsed.length) products = parsed;
-            }
-        } catch (e) {
-            console.warn('Gagal memuat produk dari localStorage', e);
-        }
+        // Ambil produk terbaru dari backend (database). Kalau gagal, tetap pakai products.js.
+        fetch('/api/products')
+            .then(r => (r.ok ? r.json() : Promise.reject(new Error('API tidak tersedia'))))
+            .then(rows => {
+                if (Array.isArray(rows) && rows.length) {
+                    products = rows;
+                    if (typeof renderProducts === 'function') renderProducts();
+                }
+            })
+            .catch(() => { /* offline / belum ada backend → pakai data products.js */ });
 
         let cart = [];
         let wishlist = [];

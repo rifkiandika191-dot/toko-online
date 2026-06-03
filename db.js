@@ -1,0 +1,94 @@
+// ============================================================
+//  Koneksi & inisialisasi PostgreSQL
+// ============================================================
+const path = require('path');
+const { Pool } = require('pg');
+
+if (!process.env.DATABASE_URL) {
+  console.warn('[db] DATABASE_URL belum di-set. Tambahkan PostgreSQL di Railway, '
+    + 'atau set DATABASE_URL di file .env untuk lokal.');
+}
+
+// Railway private network tidak perlu SSL. Kalau pakai URL publik, set DATABASE_SSL=true.
+const useSsl = process.env.DATABASE_SSL === 'true';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
+});
+
+// Buat tabel kalau belum ada.
+async function initSchema() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id          SERIAL PRIMARY KEY,
+      category    TEXT NOT NULL,
+      name        TEXT NOT NULL,
+      price       INTEGER NOT NULL DEFAULT 0,
+      images      JSONB NOT NULL DEFAULT '[]',
+      emas        TEXT,
+      karat       TEXT,
+      berat       TEXT,
+      size        TEXT,
+      description TEXT,
+      stock       INTEGER NOT NULL DEFAULT 0,
+      active      BOOLEAN NOT NULL DEFAULT true,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+}
+
+// Ambil data awal dari public/products.js (window.PRODUCTS).
+function loadSeedProducts() {
+  try {
+    global.window = global.window || {};
+    const file = path.join(__dirname, 'public', 'products.js');
+    delete require.cache[require.resolve(file)];
+    require(file);
+    return Array.isArray(global.window.PRODUCTS) ? global.window.PRODUCTS : [];
+  } catch (e) {
+    console.warn('[db] Gagal membaca seed products.js:', e.message);
+    return [];
+  }
+}
+
+// Isi tabel dari products.js HANYA kalau masih kosong (sekali saja).
+async function seedIfEmpty() {
+  const { rows } = await pool.query('SELECT COUNT(*)::int AS n FROM products');
+  if (rows[0].n > 0) {
+    console.log(`[db] Tabel products sudah berisi ${rows[0].n} baris, seed dilewati.`);
+    return;
+  }
+  const seed = loadSeedProducts();
+  if (!seed.length) {
+    console.log('[db] Tidak ada data seed.');
+    return;
+  }
+  for (const p of seed) {
+    await pool.query(
+      `INSERT INTO products (category, name, price, images, emas, karat, berat, size, description, stock, active)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      [
+        p.category || 'Lainnya',
+        p.name || 'Tanpa nama',
+        Number(p.price) || 0,
+        JSON.stringify(Array.isArray(p.images) ? p.images : []),
+        p.emas || null,
+        p.karat || null,
+        p.berat || null,
+        p.size || null,
+        p.description || null,
+        Number(p.stock) || 0,
+        p.active === false ? false : true,
+      ],
+    );
+  }
+  console.log(`[db] Seed selesai: ${seed.length} produk dimasukkan.`);
+}
+
+async function init() {
+  await initSchema();
+  await seedIfEmpty();
+}
+
+module.exports = { pool, init };

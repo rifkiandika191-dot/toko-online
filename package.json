@@ -1,0 +1,20 @@
+{
+  "name": "toko-online-karyabaru",
+  "version": "1.0.0",
+  "description": "Katalog perhiasan KARYABARU + backend Express & PostgreSQL",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0"
+  }
+}
