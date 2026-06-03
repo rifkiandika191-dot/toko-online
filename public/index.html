@@ -175,21 +175,6 @@
         </div>
     </div>
 
-        <!-- VISITOR HISTORY MODAL -->
-        <div id="visitor-modal" class="fixed inset-0 bg-black/60 z-[115] hidden flex items-center justify-center p-4">
-            <div class="w-full max-w-lg bg-white rounded-2xl p-6 shadow-2xl">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-lg">Riwayat Pengunjung</h3>
-                    <button onclick="toggleVisitorHistory()" aria-label="Tutup riwayat" class="text-2xl">&times;</button>
-                </div>
-                <div id="visitor-list" class="max-h-72 overflow-y-auto text-sm text-gray-700">
-                    <!-- daftar pengunjung akan dimuat di sini -->
-                </div>
-                <div class="mt-4 flex gap-3 justify-end">
-                    <button onclick="toggleVisitorHistory()" class="px-4 py-2 bg-gray-200 rounded-full">Tutup</button>
-                </div>
-            </div>
-        </div>
 
     <!-- 2. NAVBAR -->
     <nav class="bg-indigo-900 text-white shadow-md sticky top-[36px] z-50">
@@ -202,14 +187,6 @@
             <div class="flex items-center gap-3">
                 <button onclick="toggleTheme()" id="theme-toggle" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition" title="Beralih mode gelap/terang">
                     <i id="theme-icon" class="fas fa-moon text-xl"></i>
-                </button>
-                <button onclick="toggleWishlist()" id="wishlist-button" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition">
-                    <i class="fas fa-heart text-xl"></i>
-                    <span id="wishlist-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
-                </button>
-                <button onclick="toggleVisitorHistory()" id="visitor-button" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition" title="Riwayat Pengunjung">
-                    <i class="fas fa-users text-xl"></i>
-                    <span id="visitor-count" class="absolute -top-1 -right-1 bg-yellow-400 text-indigo-900 text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
                 </button>
             </div>
         </div>
@@ -532,18 +509,6 @@
         </div>
     </div>
 
-    <div id="wishlist-modal" class="fixed inset-0 bg-black/60 z-[110] hidden flex justify-end">
-        <div class="w-full max-w-md bg-white h-full flex flex-col shadow-2xl">
-            <div class="p-5 bg-indigo-900 text-white flex justify-between items-center">
-                <h3 class="font-bold text-xl flex items-center gap-2"><i class="fas fa-heart text-pink-400"></i> Favorit</h3>
-                <button onclick="toggleWishlist()" class="text-3xl">&times;</button>
-            </div>
-            <div id="wishlist-items" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                <!-- Item favorit masuk ke sini -->
-            </div>
-        </div>
-    </div>
-
     <div id="zoom-overlay" onclick="closeZoom()">
         <img id="zoom-img" src="" alt="Gambar diperbesar" onclick="event.stopPropagation()">
     </div>
@@ -617,8 +582,6 @@
             })
             .catch(() => { /* offline / belum ada backend → pakai data products.js */ });
 
-        let wishlist = [];
-        const WISHLIST_KEY = 'wishlist_karyabaru';
         const WA_NUMBER = '6285157075592'; // Nomor WhatsApp toko
         const THEME_KEY = 'theme_karyabaru';
         let currentCategory = 'Semua';
@@ -627,26 +590,6 @@
         let currentSort = 'default';
         let currentMinWeight = 0;
         let currentMaxWeight = 0;
-
-        function loadWishlist() {
-            try {
-                const stored = localStorage.getItem(WISHLIST_KEY);
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (Array.isArray(parsed)) wishlist = parsed;
-                }
-            } catch (e) {
-                console.warn('Gagal memuat wishlist dari localStorage', e);
-            }
-        }
-
-        function saveWishlist() {
-            try {
-                localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
-            } catch (e) {
-                console.warn('Gagal menyimpan wishlist ke localStorage', e);
-            }
-        }
 
         function applyTheme(theme) {
             const body = document.body;
@@ -701,184 +644,6 @@
             text += '_NOTED: HARGA DAPAT BERUBAH SESUAI HARGA EMAS SAAT PEMESANAN_';
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
-
-        function updateWishlistUI() {
-            const count = wishlist.length;
-            const badge = document.getElementById('wishlist-count');
-            const button = document.getElementById('wishlist-button');
-            if (badge) badge.innerText = count;
-            if (button) button.classList.toggle('text-red-400', count > 0);
-        }
-
-        function parseWeight(value) {
-            if (!value) return 0;
-            const num = parseFloat(String(value).replace(',', '.'));
-            return Number.isFinite(num) ? num : 0;
-        }
-
-        function applyFilters() {
-            const searchInput = document.getElementById('search-input');
-            const sortSelect = document.getElementById('sort-select');
-            const karatSelect = document.getElementById('karat-select');
-            const minWeightInput = document.getElementById('min-weight');
-            const maxWeightInput = document.getElementById('max-weight');
-
-            currentSearch = searchInput ? searchInput.value.trim().toLowerCase() : '';
-            currentSort = sortSelect ? sortSelect.value : 'default';
-            currentKarat = karatSelect ? karatSelect.value : 'Semua';
-            currentMinWeight = minWeightInput ? parseWeight(minWeightInput.value) : 0;
-            currentMaxWeight = maxWeightInput ? parseWeight(maxWeightInput.value) : 0;
-            renderProducts();
-        }
-
-        function toggleWishlist() {
-            const modal = document.getElementById('wishlist-modal');
-            if (!modal) return;
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) showWishlistItems();
-        }
-
-        function isFavorite(id) {
-            return wishlist.includes(id);
-        }
-
-        function addToWishlist(id) {
-            if (!wishlist.includes(id)) {
-                wishlist.push(id);
-                saveWishlist();
-                updateWishlistUI();
-                renderProducts();
-            }
-        }
-
-        function removeFromWishlist(id) {
-            const index = wishlist.indexOf(id);
-            if (index !== -1) {
-                wishlist.splice(index, 1);
-                saveWishlist();
-                updateWishlistUI();
-                renderProducts();
-                showWishlistItems();
-            }
-        }
-
-        function toggleFavorite(id) {
-            if (isFavorite(id)) {
-                removeFromWishlist(id);
-            } else {
-                addToWishlist(id);
-            }
-        }
-
-        function showWishlistItems() {
-            const list = document.getElementById('wishlist-items');
-            if (!list) return;
-
-            if (wishlist.length === 0) {
-                list.innerHTML = '<div class="text-center py-20 text-gray-500"><i class="fas fa-heart-broken text-5xl mb-4"></i><p>Belum ada produk favorit.</p></div>';
-                return;
-            }
-
-            const items = wishlist.map(id => products.find(p => p.id === id)).filter(Boolean);
-            list.innerHTML = items.map((p, i) => `
-                <div class="flex gap-4 bg-white p-3 rounded-2xl items-center border border-gray-100 shadow-sm">
-                    <img src="${getProductImages(p)[0]}" class="w-16 h-16 object-cover rounded-xl">
-                    <div class="flex-1">
-                        <p class="text-xs font-bold text-gray-800">${p.name}</p>
-                        <p class="text-sm text-indigo-700 font-black">Rp ${p.price.toLocaleString('id-ID')}</p>
-                    </div>
-                    <button onclick="pesanWA(${p.id})" title="Pesan via WhatsApp" class="bg-green-500 hover:bg-green-600 text-white w-9 h-9 rounded-full flex items-center justify-center"><i class="fab fa-whatsapp"></i></button>
-                    <button onclick="removeFromWishlist(${p.id})" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash-alt"></i></button>
-                </div>`).join('');
-        }
-
-        /** --- VISITOR HISTORY (localStorage) --- **/
-        const VISITORS_KEY = 'visitors_karyabaru';
-
-        function detectBrand(ua) {
-            if (!ua) return 'Unknown';
-            ua = ua.toLowerCase();
-            if (/iphone|ipad|ipod|apple/.test(ua)) return 'Apple';
-            if (/samsung|galaxy|sm-/.test(ua)) return 'Samsung';
-            if (/xiaomi|mi |redmi|poco|m200|m210|mi-/.test(ua)) return 'Xiaomi';
-            if (/huawei|honor/.test(ua)) return 'Huawei';
-            if (/oppo|realme|reno/.test(ua)) return 'OPPO/Realme';
-            if (/vivo/.test(ua)) return 'Vivo';
-            if (/oneplus/.test(ua)) return 'OnePlus';
-            if (/pixel|google/.test(ua)) return 'Google Pixel';
-            if (/nokia/.test(ua)) return 'Nokia';
-            if (/sony/.test(ua)) return 'Sony';
-            if (/asus/.test(ua)) return 'Asus';
-            if (/lg/.test(ua)) return 'LG';
-            if (/windows|macintosh|linux/.test(ua)) return 'Desktop';
-            return 'Unknown';
-        }
-
-        function recordVisit() {
-            try {
-                const stored = localStorage.getItem(VISITORS_KEY);
-                const arr = stored ? JSON.parse(stored) : [];
-                const entry = {
-                    ts: new Date().toISOString(),
-                    brand: detectBrand(navigator.userAgent)
-                };
-                arr.unshift(entry);
-                if (arr.length > 50) arr.length = 50;
-                localStorage.setItem(VISITORS_KEY, JSON.stringify(arr));
-                updateVisitorCount();
-            } catch (e) {
-                console.warn('Gagal merekam kunjungan', e);
-            }
-        }
-
-        function getVisitorList() {
-            try {
-                const stored = localStorage.getItem(VISITORS_KEY);
-                return stored ? JSON.parse(stored) : [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function updateVisitorCount() {
-            const list = getVisitorList();
-            const badge = document.getElementById('visitor-count');
-            if (badge) badge.innerText = String(list.length || 0);
-        }
-
-        function toggleVisitorHistory() {
-            const modal = document.getElementById('visitor-modal');
-            if (!modal) return;
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) showVisitorHistory();
-        }
-
-        function showVisitorHistory() {
-            const list = getVisitorList();
-            const container = document.getElementById('visitor-list');
-            if (!container) return;
-            if (!list || list.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-500 py-6">Belum ada riwayat pengunjung.</div>';
-                return;
-            }
-            container.innerHTML = list.map(entry => {
-                const time = new Date(entry.ts);
-                const formatted = time.toLocaleString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const brand = entry.brand || 'Unknown';
-                return `
-                    <div class="border-b border-gray-100 py-3">
-                        <div class="font-medium text-gray-900">${brand}</div>
-                        <div class="text-sm text-gray-700">${formatted}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function clearVisitorHistory() {
-            // Disabled: riwayat pengunjung tidak dapat dihapus melalui UI
-            alert('Riwayat pengunjung tidak dapat dihapus.');
-        }
-
 
         /** --- 3. LOGIKA CATALOG --- **/
         function getProductImages(product) {
@@ -942,12 +707,8 @@
 
             list.innerHTML = filtered.map(p => {
                 const mainImage = getProductImages(p)[0];
-                const favoriteClass = isFavorite(p.id) ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-black/50 text-white hover:bg-black';
                 return `
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group relative">
-                    <button type="button" onclick="toggleFavorite(${p.id}); event.stopPropagation();" class="absolute top-3 right-3 ${favoriteClass} w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition">
-                        <i class="fas fa-heart"></i>
-                    </button>
                     <div class="relative overflow-hidden aspect-square cursor-pointer" onclick="openDetail(${p.id})">
                         <img src="${mainImage}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22&gt;&lt;rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eef2ff%22/&gt;&lt;text x=%2250%25%22 y=%2250%25%22 font-family=%22sans-serif%22 font-size=%2218%22 fill=%22%236366f1%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22&gt;Foto tidak ditemukan&lt;/text&gt;&lt;/svg&gt;'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
@@ -1061,12 +822,7 @@
             }
         }
 
-        loadWishlist();
-        updateWishlistUI();
         loadTheme();
-        // Rekam kunjungan dan perbarui badge
-        recordVisit();
-        updateVisitorCount();
         // Inisialisasi Produk
         renderProducts();
     </script>
