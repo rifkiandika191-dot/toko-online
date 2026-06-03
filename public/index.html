@@ -1266,44 +1266,7 @@
                 });
             } catch (e) { /* abaikan; pesanan tetap dikirim via WA */ }
 
-            // Coba kirim FOTO produk + teks lewat menu bagikan HP (WhatsApp dipilih
-            // pelanggan). Hanya jalan di perangkat yang mendukung (umumnya HP).
-            try {
-                if (navigator.canShare) {
-                    status.textContent = 'Menyiapkan foto...';
-                    const files = [];
-                    for (const p of cart) {
-                        const src = p.images && p.images[0];
-                        if (!src) continue;
-                        try {
-                            const res = await fetch(new URL(src, location.origin).href);
-                            const blob = await res.blob();
-                            if (!blob.type.startsWith('image/')) continue;
-                            const ext = (blob.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-                            const safe = p.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-                            files.push(new File([blob], `${safe}.${ext}`, { type: blob.type }));
-                        } catch (e) { /* lewati foto yang gagal */ }
-                        if (files.length >= 10) break; // batasi
-                    }
-                    if (files.length && navigator.canShare({ files })) {
-                        await navigator.share({ files, text, title: 'Pesanan KARYABARU' });
-                        status.textContent = '✓ Pesanan dibagikan. Terima kasih!';
-                        status.className = 'text-center text-sm mt-2 text-green-600';
-                        return;
-                    }
-                }
-            } catch (e) {
-                if (e && e.name === 'AbortError') { // pelanggan menutup menu bagikan
-                    status.textContent = 'Dibatalkan. Klik lagi untuk mengirim.';
-                    status.className = 'text-center text-sm mt-2 text-gray-500';
-                    return;
-                }
-                /* perangkat tak mendukung berbagi file → pakai cara link di bawah */
-            }
-
-            // Fallback: buka WhatsApp dengan teks (berisi link foto yang bisa diklik).
             status.textContent = 'Membuka WhatsApp...';
-            status.className = 'text-center text-sm mt-2 text-gray-500';
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
