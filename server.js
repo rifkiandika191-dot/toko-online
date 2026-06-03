@@ -67,8 +67,11 @@ function rowToProduct(r) {
     description: r.description,
     stock: r.stock,
     active: r.active,
+    badge: r.badge || '',
   };
 }
+
+const ALLOWED_BADGES = ['', 'Baru', 'Terlaris', 'Stok Terbatas', 'Habis'];
 
 // Validasi & normalisasi body produk dari admin.
 function parseProductBody(b) {
@@ -89,6 +92,7 @@ function parseProductBody(b) {
     description: b.description ? String(b.description).trim() : null,
     stock: Math.max(0, parseInt(b.stock, 10) || 0),
     active: b.active === false || b.active === 'false' ? false : true,
+    badge: ALLOWED_BADGES.includes(b.badge) ? b.badge : '',
   };
 }
 
@@ -149,10 +153,10 @@ app.post('/api/products', requireAuth, async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      `INSERT INTO products (category,name,price,images,emas,karat,berat,size,description,stock,active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      `INSERT INTO products (category,name,price,images,emas,karat,berat,size,description,stock,active,badge)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [p.category, p.name, p.price, JSON.stringify(p.images), p.emas, p.karat,
-        p.berat, p.size, p.description, p.stock, p.active],
+        p.berat, p.size, p.description, p.stock, p.active, p.badge],
     );
     res.status(201).json(rowToProduct(rows[0]));
   } catch (e) {
@@ -172,9 +176,9 @@ app.put('/api/products/:id', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `UPDATE products SET category=$1,name=$2,price=$3,images=$4,emas=$5,karat=$6,
-        berat=$7,size=$8,description=$9,stock=$10,active=$11 WHERE id=$12 RETURNING *`,
+        berat=$7,size=$8,description=$9,stock=$10,active=$11,badge=$12 WHERE id=$13 RETURNING *`,
       [p.category, p.name, p.price, JSON.stringify(p.images), p.emas, p.karat,
-        p.berat, p.size, p.description, p.stock, p.active, id],
+        p.berat, p.size, p.description, p.stock, p.active, p.badge, id],
     );
     if (!rows.length) return res.status(404).json({ error: 'Produk tidak ditemukan' });
     res.json(rowToProduct(rows[0]));
@@ -211,6 +215,44 @@ app.post('/api/upload', requireAuth, (req, res) => {
     const urls = files.map((f) => `/uploads/${f.filename}`);
     res.json({ urls });
   });
+});
+
+// ---------- Pengaturan toko ----------
+const ALLOWED_SETTINGS = ['whatsapp', 'store_name', 'hours'];
+
+// Publik: ambil pengaturan toko (dipakai etalase untuk nomor WA dll)
+app.get('/api/settings', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT key, value FROM settings');
+    const out = {};
+    for (const r of rows) out[r.key] = r.value;
+    res.json(out);
+  } catch (e) {
+    res.status(500).json({ error: 'Gagal mengambil pengaturan' });
+  }
+});
+
+// Admin: simpan pengaturan toko
+app.put('/api/admin/settings', requireAuth, async (req, res) => {
+  const b = req.body || {};
+  try {
+    for (const key of ALLOWED_SETTINGS) {
+      if (b[key] === undefined) continue;
+      const value = String(b[key]).trim();
+      await pool.query(
+        `INSERT INTO settings (key, value) VALUES ($1,$2)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+        [key, value],
+      );
+    }
+    const { rows } = await pool.query('SELECT key, value FROM settings');
+    const out = {};
+    for (const r of rows) out[r.key] = r.value;
+    res.json(out);
+  } catch (e) {
+    console.error('[PUT /api/admin/settings]', e.message);
+    res.status(500).json({ error: 'Gagal menyimpan pengaturan' });
+  }
 });
 
 // ---------- Start ----------

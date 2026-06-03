@@ -36,6 +36,24 @@ async function initSchema() {
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
+
+  // Kolom label/badge produk (Baru/Terlaris/Stok Terbatas/Habis).
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS badge TEXT DEFAULT ''`);
+
+  // Pengaturan toko (key-value): nomor WA, nama toko, jam buka, dll.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT
+    );
+  `);
+  await pool.query(
+    `INSERT INTO settings (key, value) VALUES
+      ('whatsapp', '6285157075592'),
+      ('store_name', 'KARYABARU'),
+      ('hours', '')
+     ON CONFLICT (key) DO NOTHING`,
+  );
 }
 
 // Ambil data awal dari public/products.js (window.PRODUCTS).

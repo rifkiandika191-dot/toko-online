@@ -36,6 +36,7 @@
       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <h1 class="font-black text-lg"><i class="fas fa-gem mr-2"></i>Admin KARYABARU</h1>
         <div class="flex items-center gap-2">
+          <button onclick="openSettings()" class="text-sm bg-white/15 px-4 py-2 rounded-full hover:bg-white/25"><i class="fas fa-gear mr-1"></i>Pengaturan</button>
           <a href="index.html" target="_blank" class="text-sm bg-white/15 px-4 py-2 rounded-full hover:bg-white/25">Lihat Toko</a>
           <button onclick="logout()" class="text-sm bg-white/15 px-4 py-2 rounded-full hover:bg-white/25">Keluar</button>
         </div>
@@ -133,11 +134,21 @@
             <label class="text-xs font-bold text-slate-500">Stok</label>
             <input id="f-stock" type="number" min="0" class="w-full px-3 py-2 border rounded-lg mt-1" value="0" />
           </div>
-          <div class="flex items-end pb-2">
-            <label class="flex items-center gap-2 text-sm font-bold text-slate-600">
-              <input id="f-active" type="checkbox" checked class="w-4 h-4" /> Tampilkan di toko
-            </label>
+          <div>
+            <label class="text-xs font-bold text-slate-500">Label</label>
+            <select id="f-badge" class="w-full px-3 py-2 border rounded-lg mt-1 bg-white">
+              <option value="">(Tidak ada)</option>
+              <option value="Baru">Baru</option>
+              <option value="Terlaris">Terlaris</option>
+              <option value="Stok Terbatas">Stok Terbatas</option>
+              <option value="Habis">Habis</option>
+            </select>
           </div>
+        </div>
+        <div class="flex items-center pb-1">
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-600">
+            <input id="f-active" type="checkbox" checked class="w-4 h-4" /> Tampilkan di toko
+          </label>
         </div>
         <div>
           <label class="text-xs font-bold text-slate-500">Deskripsi</label>
@@ -148,6 +159,37 @@
       <div class="px-6 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
         <button onclick="closeForm()" class="px-5 py-2.5 rounded-lg border font-bold text-slate-600">Batal</button>
         <button onclick="saveProduct()" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL PENGATURAN TOKO ===== -->
+  <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div class="flex items-center justify-between px-6 py-4 border-b">
+        <h3 class="font-black text-lg">Pengaturan Toko</h3>
+        <button onclick="closeSettings()" class="text-slate-400 hover:text-slate-700"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-6 space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-500">Nomor WhatsApp</label>
+          <input id="s-whatsapp" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="6285157075592" />
+          <p class="text-[11px] text-slate-400 mt-1">Format internasional tanpa "+" atau "0" di depan (mis. 62812xxxx). Dipakai semua tombol "Pesan".</p>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-500">Nama Toko</label>
+          <input id="s-store_name" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="KARYABARU" />
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-500">Jam Buka</label>
+          <input id="s-hours" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="Senin-Sabtu 09.00-17.00" />
+        </div>
+        <p id="settings-error" class="text-red-500 text-sm hidden"></p>
+        <p id="settings-ok" class="text-green-600 text-sm hidden">✓ Tersimpan</p>
+      </div>
+      <div class="px-6 py-4 border-t flex justify-end gap-3">
+        <button onclick="closeSettings()" class="px-5 py-2.5 rounded-lg border font-bold text-slate-600">Tutup</button>
+        <button onclick="saveSettings()" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700">Simpan</button>
       </div>
     </div>
   </div>
@@ -194,6 +236,43 @@
       loadProducts();
     }
 
+    async function openSettings() {
+      document.getElementById('settings-error').classList.add('hidden');
+      document.getElementById('settings-ok').classList.add('hidden');
+      try {
+        const r = await fetch('/api/settings');
+        const s = await r.json();
+        document.getElementById('s-whatsapp').value = s.whatsapp || '';
+        document.getElementById('s-store_name').value = s.store_name || '';
+        document.getElementById('s-hours').value = s.hours || '';
+      } catch (e) { /* biarkan kosong */ }
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+    function closeSettings() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+    async function saveSettings() {
+      const err = document.getElementById('settings-error');
+      const ok = document.getElementById('settings-ok');
+      err.classList.add('hidden'); ok.classList.add('hidden');
+      const body = {
+        whatsapp: document.getElementById('s-whatsapp').value.replace(/[^0-9]/g, ''),
+        store_name: document.getElementById('s-store_name').value,
+        hours: document.getElementById('s-hours').value,
+      };
+      const r = await fetch('/api/admin/settings', {
+        method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
+      });
+      if (r.status === 401) return logout();
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        err.textContent = d.error || 'Gagal menyimpan.';
+        err.classList.remove('hidden');
+        return;
+      }
+      ok.classList.remove('hidden');
+    }
+
     async function loadProducts() {
       const r = await fetch('/api/admin/products', { headers: authHeaders() });
       if (r.status === 401) return logout();
@@ -208,7 +287,7 @@
         tr.className = 'border-t';
         tr.innerHTML = `
           <td class="px-4 py-3"><img src="${img}" onerror="this.style.visibility='hidden'" class="w-12 h-12 object-cover rounded-lg bg-slate-100"></td>
-          <td class="px-4 py-3 font-semibold">${escapeHtml(p.name)}</td>
+          <td class="px-4 py-3 font-semibold">${escapeHtml(p.name)}${p.badge ? ` <span class="ml-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 align-middle">${escapeHtml(p.badge)}</span>` : ''}</td>
           <td class="px-4 py-3 text-slate-500">${escapeHtml(p.category)}</td>
           <td class="px-4 py-3">Rp ${Number(p.price).toLocaleString('id-ID')}</td>
           <td class="px-4 py-3">${p.stock}</td>
@@ -240,6 +319,7 @@
       document.getElementById('f-berat').value = p ? (p.berat || '') : '';
       document.getElementById('f-size').value = p ? (p.size || '') : '';
       document.getElementById('f-stock').value = p ? p.stock : 0;
+      document.getElementById('f-badge').value = p ? (p.badge || '') : '';
       document.getElementById('f-active').checked = p ? !!p.active : true;
       document.getElementById('f-description').value = p ? (p.description || '') : '';
       document.getElementById('upload-status').textContent = '';
@@ -313,6 +393,7 @@
         berat: document.getElementById('f-berat').value,
         size: document.getElementById('f-size').value,
         stock: document.getElementById('f-stock').value,
+        badge: document.getElementById('f-badge').value,
         active: document.getElementById('f-active').checked,
         description: document.getElementById('f-description').value,
       };

@@ -219,7 +219,7 @@
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <button onclick="filterProduct('Semua')" class="rounded-full bg-yellow-400 px-6 py-3 text-indigo-900 font-bold shadow-xl shadow-yellow-400/30 hover:bg-yellow-300 transition">Lihat Semua Koleksi</button>
-                    <a href="https://wa.me/6285157075592" target="_blank" class="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-white font-semibold hover:bg-white/20 transition text-center">Hubungi via WhatsApp</a>
+                    <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-white font-semibold hover:bg-white/20 transition text-center">Hubungi via WhatsApp</a>
                 </div>
                 <div class="grid grid-cols-3 gap-3 text-center text-sm text-gray-200">
                     <div class="rounded-3xl bg-white/10 px-4 py-5">
@@ -463,7 +463,7 @@
             <h2 class="text-2xl font-black text-gray-900 mb-4">Ikuti Kami</h2>
             <p class="text-gray-600 mb-6">Dapatkan update produk terbaru, promo, dan layanan terbaik dari KARYA BARU.</p>
             <div class="flex flex-wrap justify-center gap-4">
-                <a href="https://wa.me/6285157075592" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-green-500 text-green-600 hover:bg-green-50 transition">
+                <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-green-500 text-green-600 hover:bg-green-50 transition">
                     <i class="fab fa-whatsapp text-xl"></i>
                     <span>WhatsApp</span>
                 </a>
@@ -484,7 +484,7 @@
     </section>
 
     <!-- FLOATING WHATSAPP BUTTON -->
-    <a href="https://wa.me/6285157075592" target="_blank" class="fixed bottom-8 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110 animate-bounce">
+    <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="fixed bottom-8 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110 animate-bounce">
         <i class="fab fa-whatsapp text-2xl"></i>
     </a>
 
@@ -505,6 +505,58 @@
                 <button id="detail-add-btn" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 shadow-lg">
                     <i class="fab fa-whatsapp text-xl"></i> Pesan lewat WhatsApp
                 </button>
+                <button id="ring-guide-link" onclick="openRingGuide()" class="hidden w-full mt-2 text-indigo-600 text-sm font-semibold hover:underline">
+                    <i class="fas fa-ruler-horizontal mr-1"></i> Panduan ukuran cincin
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANDUAN UKURAN CINCIN -->
+    <div id="ring-guide-modal" class="fixed inset-0 bg-black/70 z-[125] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
+                <h3 class="font-black text-lg"><i class="fas fa-ruler-horizontal text-indigo-600 mr-2"></i>Panduan Ukuran Cincin</h3>
+                <button onclick="closeRingGuide()" class="text-2xl text-gray-400 hover:text-gray-700">&times;</button>
+            </div>
+            <div class="p-6 space-y-5 text-sm text-gray-700">
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-2">Cara mengukur di rumah</h4>
+                    <ol class="list-decimal pl-5 space-y-1.5">
+                        <li>Lilitkan seutas benang/kertas tipis di pangkal jari yang akan dipakaikan cincin.</li>
+                        <li>Tandai titik pertemuannya, lalu ukur panjangnya dengan penggaris (dalam mm). Ini <strong>lingkar jari</strong>.</li>
+                        <li>Cocokkan lingkar jari dengan tabel di bawah untuk menemukan ukuran cincin.</li>
+                    </ol>
+                    <p class="mt-2 text-xs text-gray-500">Tips: ukur saat sore/malam (jari sedikit lebih besar) dan ulangi 2-3 kali agar akurat.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-2">Tabel ukuran</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-center border border-gray-200 rounded-lg overflow-hidden">
+                            <thead class="bg-indigo-50 text-indigo-800">
+                                <tr><th class="px-3 py-2">Ukuran</th><th class="px-3 py-2">Diameter (mm)</th><th class="px-3 py-2">Lingkar (mm)</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr><td class="px-3 py-1.5">10</td><td>14.9</td><td>46.8</td></tr>
+                                <tr><td class="px-3 py-1.5">11</td><td>15.3</td><td>48.0</td></tr>
+                                <tr><td class="px-3 py-1.5">12</td><td>15.7</td><td>49.3</td></tr>
+                                <tr><td class="px-3 py-1.5">13</td><td>16.1</td><td>50.6</td></tr>
+                                <tr><td class="px-3 py-1.5">14</td><td>16.5</td><td>51.9</td></tr>
+                                <tr><td class="px-3 py-1.5">15</td><td>16.9</td><td>53.1</td></tr>
+                                <tr><td class="px-3 py-1.5">16</td><td>17.3</td><td>54.4</td></tr>
+                                <tr><td class="px-3 py-1.5">17</td><td>17.7</td><td>55.7</td></tr>
+                                <tr><td class="px-3 py-1.5">18</td><td>18.1</td><td>57.0</td></tr>
+                                <tr><td class="px-3 py-1.5">19</td><td>18.5</td><td>58.3</td></tr>
+                                <tr><td class="px-3 py-1.5">20</td><td>18.9</td><td>59.5</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">Diameter = lingkar ÷ 3,14. Jika ukuranmu di antara dua angka, pilih yang lebih besar.</p>
+                </div>
+                <div class="bg-green-50 border border-green-200 rounded-2xl p-4">
+                    <p class="text-gray-700">Ragu menentukan ukuran? Tanyakan langsung ke kami.</p>
+                    <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="mt-2 inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-bold text-sm"><i class="fab fa-whatsapp"></i> Tanya via WhatsApp</a>
+                </div>
             </div>
         </div>
     </div>
@@ -582,8 +634,21 @@
             })
             .catch(() => { /* offline / belum ada backend → pakai data products.js */ });
 
-        const WA_NUMBER = '6285157075592'; // Nomor WhatsApp toko
+        let WA_NUMBER = '6285157075592'; // Nomor WhatsApp toko (default, ditimpa dari pengaturan)
         const THEME_KEY = 'theme_karyabaru';
+
+        // Ambil pengaturan toko (nomor WA, dll) dari server.
+        fetch('/api/settings')
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(s => {
+                if (s && s.whatsapp) {
+                    WA_NUMBER = String(s.whatsapp).replace(/[^0-9]/g, '');
+                    document.querySelectorAll('a[data-wa="1"]').forEach(a => {
+                        a.href = 'https://wa.me/' + WA_NUMBER;
+                    });
+                }
+            })
+            .catch(() => { /* pakai nomor default */ });
         let currentCategory = 'Semua';
         let currentKarat = 'Semua';
         let currentSearch = '';
@@ -707,9 +772,14 @@
 
             list.innerHTML = filtered.map(p => {
                 const mainImage = getProductImages(p)[0];
+                const habis = p.badge === 'Habis';
+                const btnHtml = habis
+                    ? `<button disabled class="w-full mt-3 bg-gray-300 text-gray-600 py-2.5 rounded-xl text-xs font-bold cursor-not-allowed">Stok Habis</button>`
+                    : `<button onclick="event.stopPropagation(); pesanWA(${p.id})" class="w-full mt-3 bg-green-500 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-green-600 transition flex items-center justify-center gap-1.5"><i class="fab fa-whatsapp"></i> Pesan</button>`;
                 return `
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group relative">
                     <div class="relative overflow-hidden aspect-square cursor-pointer" onclick="openDetail(${p.id})">
+                        ${badgeHtml(p.badge)}
                         <img src="${mainImage}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22&gt;&lt;rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eef2ff%22/&gt;&lt;text x=%2250%25%22 y=%2250%25%22 font-family=%22sans-serif%22 font-size=%2218%22 fill=%22%236366f1%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22&gt;Foto tidak ditemukan&lt;/text&gt;&lt;/svg&gt;'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                             <span class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-xs shadow-lg">Lihat Detail</span>
@@ -720,13 +790,20 @@
                         <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">${p.karat}</p>
                         <h3 class="font-bold text-gray-800 text-sm md:text-base truncate mb-1">${p.name}</h3>
                         <p class="text-indigo-800 font-black text-lg">Rp ${p.price.toLocaleString('id-ID')}</p>
-                        
-                        <button onclick="event.stopPropagation(); pesanWA(${p.id})" class="w-full mt-3 bg-green-500 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-green-600 transition flex items-center justify-center gap-1.5">
-                            <i class="fab fa-whatsapp"></i> Pesan
-                        </button>
+                        ${btnHtml}
                     </div>
                 </div>`;
             }).join('') + comingSoonCard;
+        }
+
+        // Label/badge produk -> HTML lencana berwarna.
+        function badgeHtml(badge) {
+            if (!badge) return '';
+            const colors = {
+                'Baru': 'bg-blue-600', 'Terlaris': 'bg-amber-500',
+                'Stok Terbatas': 'bg-orange-500', 'Habis': 'bg-gray-500',
+            };
+            return `<span class="absolute top-3 left-3 z-10 ${colors[badge] || 'bg-indigo-600'} text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow">${badge}</span>`;
         }
 
         function filterProduct(cat) {
@@ -759,6 +836,12 @@
             document.getElementById('detail-img').onclick = () => openZoom(document.getElementById('detail-img').src);
             document.getElementById('detail-title').innerText = p.name;
             document.getElementById('detail-price').innerText = `Rp ${p.price.toLocaleString('id-ID')}`;
+            {
+                const colors = { 'Baru': 'bg-blue-600', 'Terlaris': 'bg-amber-500', 'Stok Terbatas': 'bg-orange-500', 'Habis': 'bg-gray-500' };
+                const catEl = document.getElementById('detail-cat');
+                catEl.innerHTML = (p.category || '') + (p.badge
+                    ? ` <span class="ml-1 ${colors[p.badge] || 'bg-indigo-600'} text-white text-[10px] px-2 py-0.5 rounded-full align-middle">${p.badge}</span>` : '');
+            }
                 // render description and include ukuran tepat setelah 'Berat' jika produk cincin memiliki size
                 let descHtml = `${p.description}<br><br><strong>Emas:</strong> ${p.emas || p.karat || '-'}<br><strong>Berat:</strong> ${p.berat || '-'}`;
                 if (p.category === 'Cincin' && p.size) descHtml += `<br><strong>Ukuran:</strong> ${p.size}`;
@@ -773,12 +856,31 @@
                 </button>
             `).join('');
             
-            document.getElementById('detail-add-btn').onclick = function() {
-                pesanWA(p.id, p.size);
-            };
-            
+            const addBtn = document.getElementById('detail-add-btn');
+            if (p.badge === 'Habis') {
+                addBtn.disabled = true;
+                addBtn.onclick = null;
+                addBtn.className = 'w-full bg-gray-300 text-gray-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 cursor-not-allowed';
+                addBtn.innerHTML = 'Stok Habis';
+            } else {
+                addBtn.disabled = false;
+                addBtn.onclick = function () { pesanWA(p.id, p.size); };
+                addBtn.className = 'w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 shadow-lg';
+                addBtn.innerHTML = '<i class="fab fa-whatsapp text-xl"></i> Pesan lewat WhatsApp';
+            }
+
+            document.getElementById('ring-guide-link').classList.toggle('hidden', p.category !== 'Cincin');
+
             document.getElementById('detail-modal').classList.remove('hidden');
             document.body.classList.add('modal-active');
+        }
+
+        function openRingGuide() {
+            document.getElementById('ring-guide-modal').classList.remove('hidden');
+            document.body.classList.add('modal-active');
+        }
+        function closeRingGuide() {
+            document.getElementById('ring-guide-modal').classList.add('hidden');
         }
 
         function closeDetail() {

@@ -69,3 +69,5 @@ npm start                 # http://localhost:3000
 | PUT | `/api/products/:id` | admin | ubah produk |
 | DELETE | `/api/products/:id` | admin | hapus produk |
 | POST | `/api/upload` | admin | upload gambar (maks 6 file, 8MB) → URL `/uploads/...` |
+| GET | `/api/settings` | publik | pengaturan toko (nomor WA, nama, jam buka) |
+| PUT | `/api/admin/settings` | admin | simpan pengaturan toko |
