@@ -457,32 +457,6 @@
         </div>
     </section>
 
-    <!-- 5b. MEDIA SOSIAL -->
-    <section class="bg-white border-t border-gray-200">
-        <div class="container mx-auto px-4 py-10 text-center">
-            <h2 class="text-2xl font-black text-gray-900 mb-4">Ikuti Kami</h2>
-            <p class="text-gray-600 mb-6">Dapatkan update produk terbaru, promo, dan layanan terbaik dari KARYA BARU.</p>
-            <div class="flex flex-wrap justify-center gap-4">
-                <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-green-500 text-green-600 hover:bg-green-50 transition">
-                    <i class="fab fa-whatsapp text-xl"></i>
-                    <span>WhatsApp</span>
-                </a>
-                <a href="https://instagram.com/tokoemas_karyabaru" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-pink-500 text-pink-600 hover:bg-pink-50 transition">
-                    <i class="fab fa-instagram text-xl"></i>
-                    <span>Instagram</span>
-                </a>
-                <a href="https://www.tiktok.com/@tk.emaskaryabarugowa" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-black text-black hover:bg-gray-100 transition">
-                    <i class="fab fa-tiktok text-xl"></i>
-                    <span>TikTok</span>
-                </a>
-                <a href="https://maps.app.goo.gl/wbQVHG7zEWx13ukq9" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-red-500 text-red-600 hover:bg-red-50 transition">
-                    <i class="fas fa-location-dot text-xl"></i>
-                    <span>Google Maps</span>
-                </a>
-            </div>
-        </div>
-    </section>
-
     <!-- 5c. JAMINAN & INFO TOKO -->
     <section class="bg-gradient-to-b from-indigo-50 to-white border-t border-gray-200">
         <div class="container mx-auto px-4 py-12">
@@ -539,6 +513,32 @@
     <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="fixed bottom-8 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110 animate-bounce">
         <i class="fab fa-whatsapp text-2xl"></i>
     </a>
+
+    <!-- LIVE CHAT WIDGET -->
+    <button id="chat-fab" onclick="toggleChat()" class="fixed bottom-8 left-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-xl transition transform hover:scale-110" title="Chat dengan kami">
+        <i class="fas fa-comments text-2xl"></i>
+        <span id="chat-unread" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center border-2 border-white"></span>
+    </button>
+    <div id="chat-panel" class="hidden fixed bottom-28 left-8 z-[96] w-[90vw] max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden" style="height:28rem;max-height:70vh;">
+        <div class="bg-indigo-700 text-white px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-headset"></i>
+                <div>
+                    <p class="font-bold text-sm leading-tight">Chat KARYABARU</p>
+                    <p class="text-[11px] text-indigo-200 leading-tight">Kami biasanya balas cepat</p>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="text-2xl leading-none">&times;</button>
+        </div>
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50 text-sm"></div>
+        <div id="chat-name-row" class="px-3 pt-2 hidden">
+            <input id="chat-name" type="text" placeholder="Nama kamu (opsional)" class="w-full px-3 py-2 border rounded-lg text-sm" />
+        </div>
+        <div class="p-3 border-t flex items-center gap-2">
+            <input id="chat-input" type="text" placeholder="Tulis pesan..." onkeydown="if(event.key==='Enter')sendChat()" class="flex-1 px-3 py-2 border rounded-full text-sm focus:ring-2 focus:ring-indigo-500" />
+            <button onclick="sendChat()" class="w-10 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
 
     <!-- 6. MODAL DETAIL PRODUK -->
     <div id="detail-modal" onclick="if(event.target===this)closeDetail()" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
@@ -1014,6 +1014,97 @@
                 button.setAttribute('aria-expanded', 'false');
             }
         }
+
+        /** --- LIVE CHAT --- **/
+        function chatVisitorId() {
+            let id = localStorage.getItem('chat_visitor_id');
+            if (!id) {
+                id = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+                localStorage.setItem('chat_visitor_id', id);
+            }
+            return id;
+        }
+        let chatLastId = 0;
+        let chatPollTimer = null;
+        let chatOpen = false;
+
+        function chatBubble(m) {
+            const mine = m.sender === 'user';
+            return `<div class="flex ${mine ? 'justify-end' : 'justify-start'}">
+                <div class="${mine ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800 border border-gray-200'} rounded-2xl px-3 py-2 max-w-[80%] shadow-sm">${escapeHtmlChat(m.text)}</div>
+            </div>`;
+        }
+        function escapeHtmlChat(s) {
+            return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        }
+        function appendChat(messages) {
+            if (!messages || !messages.length) return;
+            const box = document.getElementById('chat-messages');
+            box.insertAdjacentHTML('beforeend', messages.map(chatBubble).join(''));
+            messages.forEach(m => { if (m.id > chatLastId) chatLastId = m.id; });
+            box.scrollTop = box.scrollHeight;
+        }
+        async function chatPoll() {
+            try {
+                const r = await fetch(`/api/chat/poll?visitor_id=${encodeURIComponent(chatVisitorId())}&after_id=${chatLastId}`);
+                const d = await r.json();
+                appendChat(d.messages);
+            } catch (e) { /* abaikan */ }
+        }
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            const panel = document.getElementById('chat-panel');
+            panel.classList.toggle('hidden', !chatOpen);
+            document.getElementById('chat-unread').classList.add('hidden');
+            if (chatOpen) {
+                document.getElementById('chat-name-row').classList.toggle('hidden', !!localStorage.getItem('chat_name'));
+                const box = document.getElementById('chat-messages');
+                if (!box.dataset.greeted) {
+                    box.innerHTML = `<div class="text-center text-gray-400 text-xs py-2">Halo! Ada yang bisa kami bantu? 😊</div>`;
+                    box.dataset.greeted = '1';
+                }
+                chatPoll();
+                chatPollTimer = setInterval(chatPoll, 4000);
+                setTimeout(() => document.getElementById('chat-input').focus(), 100);
+            } else if (chatPollTimer) {
+                clearInterval(chatPollTimer); chatPollTimer = null;
+            }
+        }
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            const nameEl = document.getElementById('chat-name');
+            let name = localStorage.getItem('chat_name') || '';
+            if (!name && nameEl && nameEl.value.trim()) {
+                name = nameEl.value.trim();
+                localStorage.setItem('chat_name', name);
+                document.getElementById('chat-name-row').classList.add('hidden');
+            }
+            input.value = '';
+            try {
+                const r = await fetch('/api/chat/send', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ visitor_id: chatVisitorId(), name: name || null, text }),
+                });
+                const d = await r.json();
+                if (d.message) appendChat([d.message]);
+            } catch (e) { /* abaikan */ }
+        }
+        // Cek balasan baru walau panel tertutup (badge).
+        setInterval(async () => {
+            if (chatOpen || !localStorage.getItem('chat_visitor_id')) return;
+            try {
+                const r = await fetch(`/api/chat/poll?visitor_id=${encodeURIComponent(chatVisitorId())}&after_id=${chatLastId}`);
+                const d = await r.json();
+                const replies = (d.messages || []).filter(m => m.sender === 'admin');
+                if (replies.length) {
+                    const b = document.getElementById('chat-unread');
+                    b.textContent = replies.length; b.classList.remove('hidden');
+                    // jangan majukan chatLastId di sini, biar pesannya tampil saat panel dibuka
+                }
+            } catch (e) { /* abaikan */ }
+        }, 15000);
 
         loadTheme();
         document.getElementById('footer-year').textContent = new Date().getFullYear();
