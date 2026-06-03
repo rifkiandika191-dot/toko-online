@@ -40,8 +40,12 @@ db.js            # koneksi & inisialisasi PostgreSQL (auto buat tabel + seed)
    - `ADMIN_PASSWORD` = password admin pilihanmu (WAJIB ganti)
    - `JWT_SECRET` = teks acak panjang (WAJIB ganti)
    - `DATABASE_SSL` = `false` (koneksi internal Railway)
-3. Railway otomatis menjalankan `npm install` lalu `npm start` (`node server.js`).
-4. Buka domain Railway → etalase tampil. Buka `…/admin.html` → login dengan `ADMIN_PASSWORD`.
+3. **Tambah Volume (untuk gambar permanen)**: service aplikasi → **Settings** →
+   **Volumes** → **New Volume**, mount path `/data`. Lalu tambah variable:
+   - `UPLOAD_DIR` = `/data/uploads`
+   > Tanpa Volume, gambar yang di-upload akan hilang setiap kali redeploy.
+4. Railway otomatis menjalankan `npm install` lalu `npm start` (`node server.js`).
+5. Buka domain Railway → etalase tampil. Buka `…/admin.html` → login dengan `ADMIN_PASSWORD`.
 
 ## Menjalankan lokal
 
@@ -64,3 +68,4 @@ npm start                 # http://localhost:3000
 | POST | `/api/products` | admin | tambah produk |
 | PUT | `/api/products/:id` | admin | ubah produk |
 | DELETE | `/api/products/:id` | admin | hapus produk |
+| POST | `/api/upload` | admin | upload gambar (maks 6 file, 8MB) → URL `/uploads/...` |

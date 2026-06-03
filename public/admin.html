@@ -98,8 +98,19 @@
           </div>
         </div>
         <div>
-          <label class="text-xs font-bold text-slate-500">Gambar (pisahkan dengan koma)</label>
-          <input id="f-images" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="img/foto1.png, img/foto2.png" />
+          <label class="text-xs font-bold text-slate-500">Gambar produk</label>
+          <div class="mt-1 flex items-center gap-2">
+            <input id="f-file" type="file" accept="image/*" multiple class="hidden" onchange="uploadFiles(this.files)" />
+            <button type="button" onclick="document.getElementById('f-file').click()"
+              class="px-4 py-2 rounded-lg bg-slate-100 border font-bold text-sm hover:bg-slate-200">
+              <i class="fas fa-upload mr-1"></i> Upload dari HP/Komputer
+            </button>
+            <span id="upload-status" class="text-xs text-slate-500"></span>
+          </div>
+          <div id="img-preview" class="flex flex-wrap gap-2 mt-2"></div>
+          <input id="f-images" class="w-full px-3 py-2 border rounded-lg mt-2 text-xs text-slate-500"
+            placeholder="otomatis terisi setelah upload (atau ketik manual: img/foto.png)" oninput="renderPreview()" />
+          <p class="text-[11px] text-slate-400 mt-1">Bisa upload beberapa foto. Foto pertama jadi gambar utama.</p>
         </div>
         <div class="grid grid-cols-3 gap-3">
           <div>
@@ -229,11 +240,63 @@
       document.getElementById('f-stock').value = p ? p.stock : 0;
       document.getElementById('f-active').checked = p ? !!p.active : true;
       document.getElementById('f-description').value = p ? (p.description || '') : '';
+      document.getElementById('upload-status').textContent = '';
+      renderPreview();
       document.getElementById('form-modal').classList.remove('hidden');
     }
 
     function closeForm() {
       document.getElementById('form-modal').classList.add('hidden');
+    }
+
+    function getImages() {
+      return document.getElementById('f-images').value
+        .split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    function setImages(arr) {
+      document.getElementById('f-images').value = arr.join(', ');
+      renderPreview();
+    }
+
+    function renderPreview() {
+      const wrap = document.getElementById('img-preview');
+      const imgs = getImages();
+      wrap.innerHTML = imgs.map((src, i) => `
+        <div class="relative w-16 h-16">
+          <img src="${src}" onerror="this.style.opacity=.3" class="w-16 h-16 object-cover rounded-lg border bg-slate-100">
+          <button type="button" data-i="${i}" class="del-img absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-xs leading-none">&times;</button>
+        </div>`).join('');
+      wrap.querySelectorAll('.del-img').forEach((b) => {
+        b.onclick = () => {
+          const arr = getImages();
+          arr.splice(parseInt(b.dataset.i, 10), 1);
+          setImages(arr);
+        };
+      });
+    }
+
+    async function uploadFiles(fileList) {
+      if (!fileList || !fileList.length) return;
+      const status = document.getElementById('upload-status');
+      status.textContent = 'Mengupload...';
+      const fd = new FormData();
+      for (const f of fileList) fd.append('images', f);
+      try {
+        const r = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }, // jangan set Content-Type, biar boundary otomatis
+          body: fd,
+        });
+        if (r.status === 401) return logout();
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Gagal upload');
+        setImages(getImages().concat(data.urls));
+        status.textContent = '✓ ' + data.urls.length + ' foto terupload';
+      } catch (e) {
+        status.textContent = '✗ ' + e.message;
+      } finally {
+        document.getElementById('f-file').value = '';
+      }
     }
 
     async function saveProduct() {

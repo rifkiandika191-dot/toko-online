@@ -3,7 +3,10 @@
 // ============================================================
 require('dotenv').config();
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
 const express = require('express');
+const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const { pool, init } = require('./db');
 
@@ -12,10 +15,42 @@ const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const JWT_SECRET = process.env.JWT_SECRET || 'ganti-secret-ini';
 
+// Folder penyimpanan gambar permanen.
+// Di Railway: pasang Volume lalu set UPLOAD_DIR=/data/uploads.
+// Lokal: default ke folder ./uploads (dibuat otomatis).
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+const ALLOWED_IMAGE = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const EXT_BY_MIME = {
+  'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif',
+};
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+    filename: (req, file, cb) => {
+      const ext = EXT_BY_MIME[file.mimetype] || '.bin';
+      cb(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`);
+    },
+  }),
+  limits: { fileSize: 8 * 1024 * 1024, files: 6 }, // maks 8MB per file, 6 file
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_IMAGE.has(file.mimetype)) return cb(null, true);
+    cb(new Error('Hanya gambar JPG/PNG/WEBP/GIF yang diperbolehkan'));
+  },
+});
+
 app.use(express.json({ limit: '1mb' }));
 
 // --- Sajikan file statis (index.html, products.js, img/) dari public/ ---
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'ignore' }));
+
+// --- Sajikan gambar yang di-upload (dari volume permanen) ---
+app.use('/uploads', express.static(UPLOAD_DIR, {
+  maxAge: '7d',
+  setHeaders: (res) => res.set('Cache-Control', 'public, max-age=604800'),
+}));
 
 // ---------- Helper ----------
 function rowToProduct(r) {
@@ -160,6 +195,22 @@ app.delete('/api/products/:id', requireAuth, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Gagal menghapus produk' });
   }
+});
+
+// Admin: upload gambar -> kembalikan URL permanen
+app.post('/api/upload', requireAuth, (req, res) => {
+  upload.array('images', 6)(req, res, (err) => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE'
+        ? 'Ukuran file maksimal 8MB'
+        : err.message || 'Gagal upload';
+      return res.status(400).json({ error: msg });
+    }
+    const files = req.files || [];
+    if (!files.length) return res.status(400).json({ error: 'Tidak ada file' });
+    const urls = files.map((f) => `/uploads/${f.filename}`);
+    res.json({ urls });
+  });
 });
 
 // ---------- Start ----------
