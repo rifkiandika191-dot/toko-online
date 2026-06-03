@@ -207,10 +207,6 @@
                     <i class="fas fa-heart text-xl"></i>
                     <span id="wishlist-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
                 </button>
-                <button onclick="toggleCart()" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition">
-                    <i class="fas fa-shopping-bag text-xl"></i>
-                    <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
-                </button>
                 <button onclick="toggleVisitorHistory()" id="visitor-button" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition" title="Riwayat Pengunjung">
                     <i class="fas fa-users text-xl"></i>
                     <span id="visitor-count" class="absolute -top-1 -right-1 bg-yellow-400 text-indigo-900 text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
@@ -246,7 +242,7 @@
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <button onclick="filterProduct('Semua')" class="rounded-full bg-yellow-400 px-6 py-3 text-indigo-900 font-bold shadow-xl shadow-yellow-400/30 hover:bg-yellow-300 transition">Lihat Semua Koleksi</button>
-                    <button onclick="toggleCart()" class="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-white font-semibold hover:bg-white/20 transition">Buka Keranjang</button>
+                    <a href="https://wa.me/6285157075592" target="_blank" class="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-white font-semibold hover:bg-white/20 transition text-center">Hubungi via WhatsApp</a>
                 </div>
                 <div class="grid grid-cols-3 gap-3 text-center text-sm text-gray-200">
                     <div class="rounded-3xl bg-white/10 px-4 py-5">
@@ -529,19 +525,8 @@
                     <p class="text-gray-600 text-sm leading-relaxed" id="detail-desc"></p>
                 </div>
                 <!-- ukuran ditampilkan langsung di bawah 'Berat' saat membuka detail -->
-                <div class="mb-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                    <p class="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wider">Bagikan ke:</p>
-                    <div class="flex gap-3 justify-center">
-                        <button onclick="shareToWhatsApp()" class="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition text-sm">
-                            <i class="fab fa-whatsapp"></i> WhatsApp
-                        </button>
-                        <button onclick="shareToInstagram()" class="flex-1 flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-xl font-semibold transition text-sm">
-                            <i class="fab fa-instagram"></i> Instagram
-                        </button>
-                    </div>
-                </div>
-                <button id="detail-add-btn" class="w-full bg-gray-900 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 shadow-lg">
-                    <i class="fas fa-cart-plus"></i> Tambahkan ke Keranjang
+                <button id="detail-add-btn" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 shadow-lg">
+                    <i class="fab fa-whatsapp text-xl"></i> Pesan lewat WhatsApp
                 </button>
             </div>
         </div>
@@ -556,11 +541,6 @@
             <div id="wishlist-items" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                 <!-- Item favorit masuk ke sini -->
             </div>
-            <div class="p-6 border-t bg-white">
-                <button onclick="toggleCart(); toggleWishlist();" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-xl transition-all">
-                    <i class="fas fa-shopping-bag text-2xl"></i> Buka Keranjang
-                </button>
-            </div>
         </div>
     </div>
 
@@ -568,60 +548,6 @@
         <img id="zoom-img" src="" alt="Gambar diperbesar" onclick="event.stopPropagation()">
     </div>
 
-    <div id="clear-toast" class="fixed bottom-5 right-5 z-[120] hidden flex items-center gap-3 rounded-3xl bg-white p-4 shadow-2xl border border-gray-200 text-gray-900">
-        <i class="fas fa-check-circle text-green-500 text-2xl"></i>
-        <div>
-            <p class="font-semibold">Keranjang berhasil dikosongkan</p>
-            <p class="text-xs text-gray-500">Semua item telah dihapus.</p>
-        </div>
-    </div>
-
-    <!-- 6. MODAL KERANJANG -->
-    <div id="cart-modal" class="fixed inset-0 bg-black/60 z-[110] hidden flex justify-end">
-        <div class="relative w-full max-w-md bg-white h-full flex flex-col shadow-2xl">
-            <div class="p-5 bg-indigo-900 text-white flex justify-between items-center gap-3">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-shopping-cart text-yellow-400"></i>
-                    <h3 class="font-bold text-xl">Keranjang</h3>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="promptClearCart()" class="px-3 py-2 bg-red-500 hover:bg-red-600 rounded-full text-sm font-semibold">Kosongkan</button>
-                    <button onclick="toggleCart()" class="text-3xl">&times;</button>
-                </div>
-            </div>
-            <div id="clear-confirm" class="absolute inset-0 hidden items-center justify-center bg-black/50 p-4">
-                <div class="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl border border-gray-200">
-                    <div class="mb-4 inline-flex items-center justify-center rounded-full bg-yellow-100 text-yellow-600 w-16 h-16 mx-auto">
-                        <i class="fas fa-exclamation-triangle text-2xl"></i>
-                    </div>
-                    <h4 class="text-xl font-bold text-gray-900 mb-2">Kosongkan Keranjang?</h4>
-                    <p class="text-gray-600 mb-6">Semua item yang ada di keranjang akan dihapus. Lanjutkan?</p>
-                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                        <button onclick="hideClearConfirm()" class="px-4 py-2 rounded-full border border-gray-300 text-gray-700">Batal</button>
-                        <button onclick="clearCart()" class="px-4 py-2 rounded-full bg-red-500 text-white hover:bg-red-600">Ya, kosongkan</button>
-                    </div>
-                </div>
-            </div>
-            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                <!-- Item masuk ke sini -->
-            </div>
-            <div class="p-6 border-t bg-white">
-                <div class="space-y-2 mb-4">
-                    <input id="cust-name" type="text" placeholder="Nama penerima *" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500" />
-                    <input id="cust-phone" type="tel" placeholder="No. HP / WhatsApp *" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500" />
-                    <textarea id="cust-address" rows="2" placeholder="Alamat lengkap" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"></textarea>
-                </div>
-                <div class="flex justify-between text-2xl font-black mb-4">
-                    <span class="text-gray-600">Total:</span>
-                    <span id="cart-total" class="text-indigo-800 text-3xl">Rp 0</span>
-                </div>
-                <button onclick="sendToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-xl transition-all">
-                    <i class="fab fa-whatsapp text-2xl"></i> Pesan via WhatsApp
-                </button>
-                <p id="checkout-status" class="text-center text-sm mt-2"></p>
-            </div>
-        </div>
-    </div>
 
     <!-- Data produk dipisah ke products.js (mudah tambah barang) -->
     <script src="products.js"></script>
@@ -691,10 +617,9 @@
             })
             .catch(() => { /* offline / belum ada backend → pakai data products.js */ });
 
-        let cart = [];
         let wishlist = [];
-        const CART_KEY = 'cart_karyabaru';
         const WISHLIST_KEY = 'wishlist_karyabaru';
+        const WA_NUMBER = '6285157075592'; // Nomor WhatsApp toko
         const THEME_KEY = 'theme_karyabaru';
         let currentCategory = 'Semua';
         let currentKarat = 'Semua';
@@ -720,21 +645,6 @@
                 localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
             } catch (e) {
                 console.warn('Gagal menyimpan wishlist ke localStorage', e);
-            }
-        }
-
-        function loadCart() {
-            try {
-                const stored = localStorage.getItem(CART_KEY);
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (Array.isArray(parsed)) cart = parsed.map(item => {
-                        const product = products.find(p => p.id === item.id);
-                        return product || item;
-                    });
-                }
-            } catch (e) {
-                console.warn('Gagal memuat cart dari localStorage', e);
             }
         }
 
@@ -770,47 +680,26 @@
             applyTheme(nextTheme);
         }
 
-        function saveCart() {
-            try {
-                localStorage.setItem(CART_KEY, JSON.stringify(cart));
-            } catch (e) {
-                console.warn('Gagal menyimpan cart ke localStorage', e);
-            }
-        }
-
-        function promptClearCart() {
-            const confirmBox = document.getElementById('clear-confirm');
-            if (!confirmBox) return;
-            confirmBox.classList.remove('hidden');
-        }
-
-        function hideClearConfirm() {
-            const confirmBox = document.getElementById('clear-confirm');
-            if (!confirmBox) return;
-            confirmBox.classList.add('hidden');
-        }
-
-        function clearCart() {
-            cart = [];
-            saveCart();
-            updateUI();
-            hideClearConfirm();
-            showClearToast();
-        }
-
-        function showClearToast() {
-            const toast = document.getElementById('clear-toast');
-            if (!toast) return;
-            toast.classList.remove('hidden');
-            toast.classList.add('animate-slide-in');
-            setTimeout(() => {
-                toast.classList.remove('animate-slide-in');
-                toast.classList.add('animate-slide-out');
-            }, 2200);
-            setTimeout(() => {
-                toast.classList.add('hidden');
-                toast.classList.remove('animate-slide-out');
-            }, 2800);
+        // Pesan satu produk langsung lewat WhatsApp (tanpa keranjang).
+        function pesanWA(id, size) {
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            const imgUrl = (p.images && p.images[0])
+                ? new URL(p.images[0], location.origin).href : '';
+            const sz = size || p.size;
+            let text = '*PESANAN - KARYABARU*\n';
+            text += '--------------------------------------\n';
+            text += `*${p.name}*\n`;
+            text += `Harga: Rp ${Number(p.price).toLocaleString('id-ID')}\n`;
+            if (p.emas || p.karat) text += `Emas: ${p.emas || p.karat}\n`;
+            if (p.berat) text += `Berat: ${p.berat}\n`;
+            if (sz) text += `Ukuran: ${sz}\n`;
+            if (imgUrl) text += `Foto: ${imgUrl}\n`;
+            text += '--------------------------------------\n';
+            text += 'Halo, saya ingin memesan produk ini.\n';
+            text += 'Nama:\nAlamat:\n\n';
+            text += '_NOTED: HARGA DAPAT BERUBAH SESUAI HARGA EMAS SAAT PEMESANAN_';
+            window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function updateWishlistUI() {
@@ -898,6 +787,7 @@
                         <p class="text-xs font-bold text-gray-800">${p.name}</p>
                         <p class="text-sm text-indigo-700 font-black">Rp ${p.price.toLocaleString('id-ID')}</p>
                     </div>
+                    <button onclick="pesanWA(${p.id})" title="Pesan via WhatsApp" class="bg-green-500 hover:bg-green-600 text-white w-9 h-9 rounded-full flex items-center justify-center"><i class="fab fa-whatsapp"></i></button>
                     <button onclick="removeFromWishlist(${p.id})" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash-alt"></i></button>
                 </div>`).join('');
         }
@@ -1070,8 +960,8 @@
                         <h3 class="font-bold text-gray-800 text-sm md:text-base truncate mb-1">${p.name}</h3>
                         <p class="text-indigo-800 font-black text-lg">Rp ${p.price.toLocaleString('id-ID')}</p>
                         
-                        <button onclick="addToCart(${p.id})" class="w-full mt-3 bg-gray-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition">
-                            + Keranjang
+                        <button onclick="event.stopPropagation(); pesanWA(${p.id})" class="w-full mt-3 bg-green-500 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-green-600 transition flex items-center justify-center gap-1.5">
+                            <i class="fab fa-whatsapp"></i> Pesan
                         </button>
                     </div>
                 </div>`;
@@ -1123,9 +1013,7 @@
             `).join('');
             
             document.getElementById('detail-add-btn').onclick = function() {
-                // when adding from modal, use product.size (readonly) if available
-                addToCart(p.id);
-                closeDetail();
+                pesanWA(p.id, p.size);
             };
             
             document.getElementById('detail-modal').classList.remove('hidden');
@@ -1148,162 +1036,7 @@
             overlay.classList.remove('active');
         }
 
-        /** --- 5. LOGIKA KERANJANG --- **/
-        function addToCart(id, size) {
-            const p = products.find(item => item.id === id);
-            if (!p) return;
-            const item = Object.assign({}, p);
-            // Prefer explicit size parameter, otherwise fall back to product.size
-            if (size) {
-                item.selectedSize = size;
-            } else if (p.size) {
-                item.selectedSize = p.size;
-            }
-
-            cart.push(item);
-            saveCart();
-            updateUI();
-
-            // Notifikasi simpel
-            const btn = (typeof event !== 'undefined' && event && event.currentTarget) ? event.currentTarget : null;
-            if (btn && btn.id !== 'detail-add-btn') {
-                const originalText = btn.innerText;
-                btn.innerText = "✓ Berhasil";
-                btn.classList.replace('bg-gray-900', 'bg-green-600');
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.replace('bg-green-600', 'bg-gray-900');
-                }, 1000);
-            }
-        }
-
-        function updateUI() {
-            document.getElementById('cart-count').innerText = cart.length;
-            const itemsDiv = document.getElementById('cart-items');
-            const totalDiv = document.getElementById('cart-total');
-            
-            if(cart.length === 0) {
-                itemsDiv.innerHTML = `<div class="text-center py-20"><i class="fas fa-shopping-basket text-5xl text-gray-200 mb-4"></i><p class="text-gray-400">Keranjang Kosong</p></div>`;
-                totalDiv.innerText = "Rp 0";
-                return;
-            }
-
-            let total = 0;
-            itemsDiv.innerHTML = cart.map((p, i) => {
-                total += p.price;
-                return `
-                <div class="flex gap-4 bg-white p-3 rounded-2xl items-center border border-gray-100 shadow-sm">
-                    <img src="${getProductImages(p)[0]}" class="w-16 h-16 object-cover rounded-xl">
-                    <div class="flex-1">
-                        <p class="text-xs font-bold text-gray-800">${p.name}</p>
-                        <p class="text-sm text-indigo-700 font-black">Rp ${p.price.toLocaleString('id-ID')}</p>
-                        ${p.selectedSize ? `<p class="text-xs text-gray-500">Ukuran: ${p.selectedSize}</p>` : ''}
-                    </div>
-                    <button onclick="remove(${i})" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash-alt"></i></button>
-                </div>`;
-            }).join('');
-            totalDiv.innerText = `Rp ${total.toLocaleString('id-ID')}`;
-        }
-
-        function remove(i) {
-            cart.splice(i, 1);
-            saveCart();
-            updateUI();
-        }
-
-        function toggleCart() {
-            document.getElementById('cart-modal').classList.toggle('hidden');
-        }
-
-        /** --- 6. WHATSAPP SENDER --- **/
-        async function sendToWhatsApp() {
-            if (cart.length === 0) return alert("Keranjang belanja masih kosong!");
-
-            const WA_NUMBER = "6285157075592"; // GANTI DENGAN NOMOR HP KAMU
-            const name = (document.getElementById('cust-name').value || '').trim();
-            const phone = (document.getElementById('cust-phone').value || '').trim();
-            const address = (document.getElementById('cust-address').value || '').trim();
-            const status = document.getElementById('checkout-status');
-
-            if (!name || !phone) {
-                status.textContent = 'Mohon isi nama & nomor HP dulu.';
-                status.className = 'text-center text-sm mt-2 text-red-500';
-                return;
-            }
-
-            // Susun pesan WhatsApp + LINK GAMBAR tiap produk (bisa dibuka penjual).
-            let total = 0;
-            let text = "*PESANAN BARU - KARYABARU*\n";
-            text += "--------------------------------------\n";
-            cart.forEach((p, i) => {
-                const imgUrl = p.images && p.images[0]
-                    ? new URL(p.images[0], location.origin).href : '';
-                text += `${i + 1}. *${p.name}*\n   Harga: Rp ${p.price.toLocaleString('id-ID')}\n`;
-                if (p.selectedSize) text += `   Ukuran: ${p.selectedSize}\n`;
-                if (imgUrl) text += `   Foto: ${imgUrl}\n`;
-                total += p.price;
-            });
-            text += "--------------------------------------\n";
-            text += `*TOTAL: Rp ${total.toLocaleString('id-ID')}*\n\n`;
-            text += `*Nama:* ${name}\n*No. HP:* ${phone}\n*Alamat:* ${address || '-'}\n\n`;
-            text += "_NOTED: HARGA DAPAT BERUBAH SESUAI HARGA EMAS SAAT PEMESANAN_";
-
-            // Simpan pesanan ke database (best-effort; tetap lanjut ke WA walau gagal).
-            status.textContent = 'Memproses pesanan...';
-            status.className = 'text-center text-sm mt-2 text-gray-500';
-            try {
-                await fetch('/api/orders', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name, phone, address,
-                        items: cart.map(p => ({
-                            id: p.id, name: p.name, price: p.price,
-                            qty: 1, size: p.selectedSize || null,
-                            image: (p.images && p.images[0]) || null,
-                        })),
-                    }),
-                });
-            } catch (e) { /* abaikan; pesanan tetap dikirim via WA */ }
-
-            status.textContent = 'Membuka WhatsApp...';
-            window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
-        }
-
-        /** --- 7. SHARE PRODUK --- **/
-        function shareToWhatsApp() {
-            const modal = document.getElementById('detail-modal');
-            const titleEl = document.getElementById('detail-title');
-            const product = products.find(p => (modal && modal.dataset.productId == p.id) || (titleEl && titleEl.innerText === p.name));
-            if (!product) {
-                const title = titleEl ? titleEl.innerText : '';
-                const productData = products.find(p => p.name === title);
-                if (productData) {
-                    let message = `Hai! Saya tertarik dengan produk ini:\n\n*${productData.name}*\nHarga: Rp ${productData.price.toLocaleString('id-ID')}\nBerat: ${productData.berat}\nEmas: ${productData.emas}\n`;
-                    if (productData.size) message += `Ukuran: ${productData.size}\n`;
-                    message += `\nApa ada stok? Bisa di-order?`;
-                    window.open(`https://wa.me/6285157075592?text=${encodeURIComponent(message)}`, '_blank');
-                }
-                return;
-            }
-            let message = `Hai! Saya tertarik dengan produk ini:\n\n*${product.name}*\nHarga: Rp ${product.price.toLocaleString('id-ID')}\nBerat: ${product.berat}\nEmas: ${product.emas}\n`;
-            if (product.size) message += `Ukuran: ${product.size}\n`;
-            message += `\nApa ada stok? Bisa di-order?`;
-            window.open(`https://wa.me/6285157075592?text=${encodeURIComponent(message)}`, '_blank');
-        }
-
-        function shareToInstagram() {
-            const instagramProfile = "https://instagram.com/tokoemas_karyabaru";
-            const modal = document.getElementById('detail-modal');
-            const titleEl = document.getElementById('detail-title');
-            const product = products.find(p => (modal && modal.dataset.productId == p.id) || (titleEl && titleEl.innerText === p.name));
-            let info = `Kunjungi Instagram kami untuk melihat produk ini: ${instagramProfile}`;
-            if (product && product.size) info = `Produk: ${product.name}\nUkuran: ${product.size}\n\n` + info;
-            alert(info);
-            window.open(instagramProfile, '_blank');
-        }
-
-        /** --- 8. TOGGLE FAQ --- **/
+        /** --- TOGGLE FAQ --- **/
         function toggleFaq(button) {
             const faqItem = button.closest('.faq-item');
             if (!faqItem) return;
@@ -1330,9 +1063,7 @@
 
         loadWishlist();
         updateWishlistUI();
-        loadCart();
         loadTheme();
-        updateUI();
         // Rekam kunjungan dan perbarui badge
         recordVisit();
         updateVisitorCount();

@@ -69,6 +69,3 @@ npm start                 # http://localhost:3000
 | PUT | `/api/products/:id` | admin | ubah produk |
 | DELETE | `/api/products/:id` | admin | hapus produk |
 | POST | `/api/upload` | admin | upload gambar (maks 6 file, 8MB) → URL `/uploads/...` |
-| POST | `/api/orders` | publik | buat pesanan saat checkout (tersimpan di DB) |
-| GET | `/api/admin/orders` | admin | daftar pesanan |
-| PUT | `/api/admin/orders/:id` | admin | ubah status pesanan (baru/diproses/dikirim/selesai/batal) |
