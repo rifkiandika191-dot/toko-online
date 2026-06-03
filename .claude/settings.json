@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/muhammadrifqi/Documents/toko-saya/auto-push.sh",
+            "timeout": 120,
+            "statusMessage": "Auto-push ke GitHub..."
+          }
+        ]
+      }
+    ]
+  }
+}
