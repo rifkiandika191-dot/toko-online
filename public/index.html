@@ -475,8 +475,8 @@
                     <i class="fab fa-tiktok text-xl"></i>
                     <span>TikTok</span>
                 </a>
-                <a href="https://maps.app.goo.gl/wbQVHG7zEWx13ukq9" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-black text-black hover:bg-gray-100 transition">
-                    <i class="fab fa-maps text-xl"></i>
+                <a href="https://maps.app.goo.gl/wbQVHG7zEWx13ukq9" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-red-500 text-red-600 hover:bg-red-50 transition">
+                    <i class="fas fa-location-dot text-xl"></i>
                     <span>Google Maps</span>
                 </a>
             </div>
@@ -484,25 +484,56 @@
     </section>
 
     <!-- 5c. JAMINAN & INFO TOKO -->
-    <section class="bg-indigo-50 border-t border-gray-200">
-        <div class="container mx-auto px-4 py-10 grid gap-6 md:grid-cols-3 text-center">
-            <div id="warranty-card" class="bg-white rounded-2xl p-6 shadow-sm border border-indigo-100">
-                <i class="fas fa-shield-halved text-3xl text-indigo-600 mb-3"></i>
-                <h3 class="font-black text-gray-900 mb-1">Jaminan & Keaslian</h3>
-                <p id="warranty-text" class="text-sm text-gray-600">Setiap produk dijamin keaslian emas dan kadarnya.</p>
-            </div>
-            <div id="hours-card" class="bg-white rounded-2xl p-6 shadow-sm border border-indigo-100 hidden">
-                <i class="fas fa-clock text-3xl text-indigo-600 mb-3"></i>
-                <h3 class="font-black text-gray-900 mb-1">Jam Buka</h3>
-                <p id="hours-text" class="text-sm text-gray-600"></p>
-            </div>
-            <div id="address-card" class="bg-white rounded-2xl p-6 shadow-sm border border-indigo-100 hidden">
-                <i class="fas fa-location-dot text-3xl text-indigo-600 mb-3"></i>
-                <h3 class="font-black text-gray-900 mb-1">Alamat Toko</h3>
-                <p id="address-text" class="text-sm text-gray-600"></p>
+    <section class="bg-gradient-to-b from-indigo-50 to-white border-t border-gray-200">
+        <div class="container mx-auto px-4 py-12">
+            <div class="flex flex-wrap justify-center gap-6">
+                <div id="warranty-card" class="bg-white rounded-2xl p-7 shadow-sm border border-indigo-100 hover:shadow-lg hover:-translate-y-1 transition w-full sm:w-72 text-center">
+                    <div class="mx-auto w-14 h-14 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center text-2xl mb-4"><i class="fas fa-shield-halved"></i></div>
+                    <h3 class="font-black text-gray-900 mb-1.5">Jaminan & Keaslian</h3>
+                    <p id="warranty-text" class="text-sm text-gray-600 leading-relaxed">Setiap produk dijamin keaslian emas dan kadarnya.</p>
+                </div>
+                <div id="hours-card" class="bg-white rounded-2xl p-7 shadow-sm border border-indigo-100 hover:shadow-lg hover:-translate-y-1 transition w-full sm:w-72 text-center hidden">
+                    <div class="mx-auto w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl mb-4"><i class="fas fa-clock"></i></div>
+                    <h3 class="font-black text-gray-900 mb-1.5">Jam Buka</h3>
+                    <p id="hours-text" class="text-sm text-gray-600 leading-relaxed"></p>
+                </div>
+                <div id="address-card" class="bg-white rounded-2xl p-7 shadow-sm border border-indigo-100 hover:shadow-lg hover:-translate-y-1 transition w-full sm:w-72 text-center hidden">
+                    <div class="mx-auto w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center text-2xl mb-4"><i class="fas fa-location-dot"></i></div>
+                    <h3 class="font-black text-gray-900 mb-1.5">Alamat Toko</h3>
+                    <p id="address-text" class="text-sm text-gray-600 leading-relaxed"></p>
+                </div>
+                <div class="bg-white rounded-2xl p-7 shadow-sm border border-indigo-100 hover:shadow-lg hover:-translate-y-1 transition w-full sm:w-72 text-center">
+                    <div class="mx-auto w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mb-4"><i class="fas fa-repeat"></i></div>
+                    <h3 class="font-black text-gray-900 mb-1.5">Tukar Tambah & Buyback</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Layanan tukar tambah dan beli kembali emas lama Anda.</p>
+                </div>
             </div>
         </div>
     </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-indigo-950 text-gray-300">
+        <div class="container mx-auto px-4 py-10">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-gem text-yellow-400 text-2xl"></i>
+                        <span class="text-xl font-black tracking-tighter uppercase text-white">KARYA<span class="text-yellow-400">BARU</span></span>
+                    </div>
+                    <p class="text-sm text-gray-400 max-w-sm">Katalog perhiasan & logam mulia. Pemesanan mudah & cepat lewat WhatsApp.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="w-11 h-11 rounded-full bg-white/10 hover:bg-green-500 flex items-center justify-center transition" title="WhatsApp"><i class="fab fa-whatsapp text-lg"></i></a>
+                    <a href="https://instagram.com/tokoemas_karyabaru" target="_blank" class="w-11 h-11 rounded-full bg-white/10 hover:bg-pink-500 flex items-center justify-center transition" title="Instagram"><i class="fab fa-instagram text-lg"></i></a>
+                    <a href="https://www.tiktok.com/@tk.emaskaryabarugowa" target="_blank" class="w-11 h-11 rounded-full bg-white/10 hover:bg-black flex items-center justify-center transition" title="TikTok"><i class="fab fa-tiktok text-lg"></i></a>
+                    <a href="https://maps.app.goo.gl/wbQVHG7zEWx13ukq9" target="_blank" class="w-11 h-11 rounded-full bg-white/10 hover:bg-red-500 flex items-center justify-center transition" title="Google Maps"><i class="fas fa-location-dot text-lg"></i></a>
+                </div>
+            </div>
+            <div class="border-t border-white/10 mt-8 pt-6 text-center text-xs text-gray-500">
+                &copy; <span id="footer-year"></span> KARYABARU. Semua hak dilindungi.
+            </div>
+        </div>
+    </footer>
 
     <!-- FLOATING WHATSAPP BUTTON -->
     <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" class="fixed bottom-8 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110 animate-bounce">
@@ -985,6 +1016,7 @@
         }
 
         loadTheme();
+        document.getElementById('footer-year').textContent = new Date().getFullYear();
         // Inisialisasi Produk
         renderProducts();
     </script>
