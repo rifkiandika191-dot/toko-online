@@ -152,6 +152,22 @@
         </div>
     </div>
 
+        <!-- VISITOR HISTORY MODAL -->
+        <div id="visitor-modal" class="fixed inset-0 bg-black/60 z-[115] hidden flex items-center justify-center p-4">
+            <div class="w-full max-w-lg bg-white rounded-2xl p-6 shadow-2xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg">Riwayat Pengunjung</h3>
+                    <button onclick="toggleVisitorHistory()" aria-label="Tutup riwayat" class="text-2xl">&times;</button>
+                </div>
+                <div id="visitor-list" class="max-h-72 overflow-y-auto text-sm text-gray-700">
+                    <!-- daftar pengunjung akan dimuat di sini -->
+                </div>
+                <div class="mt-4 flex gap-3 justify-end">
+                    <button onclick="toggleVisitorHistory()" class="px-4 py-2 bg-gray-200 rounded-full">Tutup</button>
+                </div>
+            </div>
+        </div>
+
     <!-- 2. NAVBAR -->
     <nav class="bg-indigo-900 text-white shadow-md sticky top-[36px] z-50">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -172,6 +188,10 @@
                     <i class="fas fa-shopping-bag text-xl"></i>
                     <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
                 </button>
+                <button onclick="toggleVisitorHistory()" id="visitor-button" class="relative p-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-full transition" title="Riwayat Pengunjung">
+                    <i class="fas fa-users text-xl"></i>
+                    <span id="visitor-count" class="absolute -top-1 -right-1 bg-yellow-400 text-indigo-900 text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-indigo-900">0</span>
+                </button>
             </div>
         </div>
     </nav>
@@ -189,6 +209,7 @@
                     <div class="rounded-[1.75rem] bg-white/10 p-5 border border-white/10 shadow-xl">
                         <p class="text-xs uppercase tracking-[0.35em] text-white/70">Harga Emas Saat Ini</p>
                         <p id="gold-ticker" class="mt-4 text-3xl font-black text-white">Memuat...</p>
+                        <div id="gold-trend" class="mt-2 inline-flex items-center gap-2 text-sm text-white/80"></div>
                         <div class="mt-4 flex flex-wrap items-center gap-3">
                             <button onclick="fetchGoldPrice()" class="rounded-full bg-white px-5 py-3 text-sm font-bold text-indigo-900 shadow-xl shadow-white/20 hover:bg-slate-100 transition">Cek harga emas hari ini</button>
                             <span id="gold-updated" class="text-sm text-white/80">Terakhir diperbarui: -</span>
@@ -448,7 +469,7 @@
             <h2 class="text-2xl font-black text-gray-900 mb-4">Ikuti Kami</h2>
             <p class="text-gray-600 mb-6">Dapatkan update produk terbaru, promo, dan layanan terbaik dari KARYA BARU.</p>
             <div class="flex flex-wrap justify-center gap-4">
-                <a href="https://wa.me/628111317166" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-green-500 text-green-600 hover:bg-green-50 transition">
+                <a href="https://wa.me/6285157075592" target="_blank" class="flex items-center gap-3 px-5 py-3 rounded-full border border-green-500 text-green-600 hover:bg-green-50 transition">
                     <i class="fab fa-whatsapp text-xl"></i>
                     <span>WhatsApp</span>
                 </a>
@@ -469,7 +490,7 @@
     </section>
 
     <!-- FLOATING WHATSAPP BUTTON -->
-    <a href="https://wa.me/628111317166" target="_blank" class="fixed bottom-8 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110 animate-bounce">
+    <a href="https://wa.me/6285157075592" target="_blank" class="fixed bottom-8 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110 animate-bounce">
         <i class="fab fa-whatsapp text-2xl"></i>
     </a>
 
@@ -486,6 +507,7 @@
                 <div class="my-4 border-t border-gray-100 pt-4">
                     <p class="text-gray-600 text-sm leading-relaxed" id="detail-desc"></p>
                 </div>
+                <!-- ukuran ditampilkan langsung di bawah 'Berat' saat membuka detail -->
                 <div class="mb-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
                     <p class="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wider">Bagikan ke:</p>
                     <div class="flex gap-3 justify-center">
@@ -576,26 +598,49 @@
 
     <script>
         /** --- 1. HARGA EMAS REAL-TIME --- **/
+        const GOLD_PRICE_KEY = 'gold_price_last';
+
         async function fetchGoldPrice() {
             const ticker = document.getElementById('gold-ticker');
+            const trend = document.getElementById('gold-trend');
             const updated = document.getElementById('gold-updated');
             try {
                 const response = await fetch('https://api.gold-api.com/price/XAU');
                 const data = await response.json();
-                
-                const priceUsdOunce = data.price; 
-                const usdToIdr = 17700; // Kurs estimasi USD ke IDR
-                const ounceToGram = 31.1035; 
+
+                const priceUsdOunce = data.price;
+                const usdToIdr = 17800; // Kurs estimasi USD ke IDR
+                const ounceToGram = 31.1035;
 
                 const priceIdrGram = (priceUsdOunce / ounceToGram) * usdToIdr;
-                const formattedPrice = Math.round(priceIdrGram).toLocaleString('id-ID');
+                const roundedPrice = Math.round(priceIdrGram);
+                const formattedPrice = roundedPrice.toLocaleString('id-ID');
 
                 ticker.innerText = `Rp ${formattedPrice}/gram`;
+
+                const previous = Number(localStorage.getItem(GOLD_PRICE_KEY));
+                if (!Number.isNaN(previous) && previous > 0) {
+                    if (roundedPrice > previous) {
+                        trend.innerHTML = `<span class="inline-flex items-center gap-2 text-emerald-300 font-semibold"><i class="fas fa-arrow-up"></i>Naik</span>`;
+                    } else if (roundedPrice < previous) {
+                        trend.innerHTML = `<span class="inline-flex items-center gap-2 text-red-300 font-semibold"><i class="fas fa-arrow-down"></i>Turun</span>`;
+                    } else {
+                        trend.innerHTML = `<span class="inline-flex items-center gap-2 text-white/90 font-semibold"><i class="fas fa-minus"></i>Tetap</span>`;
+                    }
+                } else {
+                    trend.innerHTML = `<span class="inline-flex items-center gap-2 text-white/90 font-semibold"><i class="fas fa-chart-line"></i>Memuat trend...</span>`;
+                }
+
+                localStorage.setItem(GOLD_PRICE_KEY, String(roundedPrice));
+
                 if (updated) {
                     updated.innerText = `Terakhir diperbarui: ${new Date().toLocaleTimeString('id-ID')}`;
                 }
             } catch (error) {
                 ticker.innerHTML = `<span class="text-xs uppercase tracking-[0.35em] text-white/70">Harga Emas Real-time</span><span class="block mt-3 text-sm text-white/80">Gagal memuat harga emas. Silakan periksa koneksi internet Anda.</span>`;
+                if (trend) {
+                    trend.innerHTML = `<span class="inline-flex items-center gap-2 text-red-300 font-semibold"><i class="fas fa-exclamation-triangle"></i>Gagal memuat trend</span>`;
+                }
             }
         }
         fetchGoldPrice();
@@ -713,6 +758,67 @@
                 berat: "14,22 gram",
                 description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
             },
+            {
+                id: 11,
+                category: "Cincin",
+                name: "Cincin Roda",
+                price: 2064000,
+                images: ["img/Cincin Roda1.png", "img/Cincin Roda2.png" ,],
+                emas: "420",
+                karat: "420",
+                berat: "1,72 gram",
+                size: "15",
+                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 12,
+                category: "Cincin",
+                name: "Cincin SS",
+                price: 6096000,
+                images: ["img/Cincin SS1.png", "img/Cincin SS2.png" ,],
+                emas: "420",
+                karat: "420",
+                berat: "5,08 gram",
+                size: "14",
+                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 13,
+                category: "Cincin",
+                name: "Cincin Durian",
+                price: 4200000,
+                images: ["img/Cincin Durian1.png", "img/Cincin Durian2.png" ,],
+                emas: "700",
+                karat: "700",
+                berat: "2,1 gram",
+                size: "15",
+                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 14,
+                category: "Cincin",
+                name: "Cincin 700",
+                price: 4000000,
+                images: ["img/Cincin7001.png", "img/Cincin7002.png" ,],
+                emas: "700",
+                karat: "700",
+                berat: "2 gram",
+                size: "14",
+                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            {
+                id: 15,
+                category: "Cincin",
+                name: "Cincin AD",
+                price: 4000000,
+                images: ["img/CincinAD.png",],
+                emas: "700",
+                karat: "700",
+                berat: "2 gram",
+                size: "12",
+                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
+            },
+            
         ];
 
         // Load saved products from localStorage (if any)
@@ -938,6 +1044,94 @@
                 </div>`).join('');
         }
 
+        /** --- VISITOR HISTORY (localStorage) --- **/
+        const VISITORS_KEY = 'visitors_karyabaru';
+
+        function detectBrand(ua) {
+            if (!ua) return 'Unknown';
+            ua = ua.toLowerCase();
+            if (/iphone|ipad|ipod|apple/.test(ua)) return 'Apple';
+            if (/samsung|galaxy|sm-/.test(ua)) return 'Samsung';
+            if (/xiaomi|mi |redmi|poco|m200|m210|mi-/.test(ua)) return 'Xiaomi';
+            if (/huawei|honor/.test(ua)) return 'Huawei';
+            if (/oppo|realme|reno/.test(ua)) return 'OPPO/Realme';
+            if (/vivo/.test(ua)) return 'Vivo';
+            if (/oneplus/.test(ua)) return 'OnePlus';
+            if (/pixel|google/.test(ua)) return 'Google Pixel';
+            if (/nokia/.test(ua)) return 'Nokia';
+            if (/sony/.test(ua)) return 'Sony';
+            if (/asus/.test(ua)) return 'Asus';
+            if (/lg/.test(ua)) return 'LG';
+            if (/windows|macintosh|linux/.test(ua)) return 'Desktop';
+            return 'Unknown';
+        }
+
+        function recordVisit() {
+            try {
+                const stored = localStorage.getItem(VISITORS_KEY);
+                const arr = stored ? JSON.parse(stored) : [];
+                const entry = {
+                    ts: new Date().toISOString(),
+                    brand: detectBrand(navigator.userAgent)
+                };
+                arr.unshift(entry);
+                if (arr.length > 50) arr.length = 50;
+                localStorage.setItem(VISITORS_KEY, JSON.stringify(arr));
+                updateVisitorCount();
+            } catch (e) {
+                console.warn('Gagal merekam kunjungan', e);
+            }
+        }
+
+        function getVisitorList() {
+            try {
+                const stored = localStorage.getItem(VISITORS_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function updateVisitorCount() {
+            const list = getVisitorList();
+            const badge = document.getElementById('visitor-count');
+            if (badge) badge.innerText = String(list.length || 0);
+        }
+
+        function toggleVisitorHistory() {
+            const modal = document.getElementById('visitor-modal');
+            if (!modal) return;
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) showVisitorHistory();
+        }
+
+        function showVisitorHistory() {
+            const list = getVisitorList();
+            const container = document.getElementById('visitor-list');
+            if (!container) return;
+            if (!list || list.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-6">Belum ada riwayat pengunjung.</div>';
+                return;
+            }
+            container.innerHTML = list.map(entry => {
+                const time = new Date(entry.ts);
+                const formatted = time.toLocaleString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const brand = entry.brand || 'Unknown';
+                return `
+                    <div class="border-b border-gray-100 py-3">
+                        <div class="font-medium text-gray-900">${brand}</div>
+                        <div class="text-sm text-gray-700">${formatted}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearVisitorHistory() {
+            // Disabled: riwayat pengunjung tidak dapat dihapus melalui UI
+            alert('Riwayat pengunjung tidak dapat dihapus.');
+        }
+
+
         /** --- 3. LOGIKA CATALOG --- **/
         function getProductImages(product) {
             return Array.isArray(product.images) ? product.images : [product.image || ''];
@@ -973,8 +1167,26 @@
                 filtered.sort((a, b) => b.price - a.price);
             }
 
+            const comingSoonCard = `
+                <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl shadow-sm border-2 border-dashed border-indigo-300 overflow-hidden hover:shadow-xl transition-all duration-300 group relative flex items-center justify-center min-h-full">
+                    <div class="text-center p-8">
+                        <span class="inline-block mb-4 px-4 py-1.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full uppercase tracking-widest">Coming Soon</span>
+                        <div class="mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-100 animate-pulse">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-indigo-600"></i>
+                        </div>
+                        <h3 class="font-black text-lg text-indigo-900 mb-2">Produk Terbaru</h3>
+                        <p class="text-sm text-indigo-700">Nantikan produk terbarunya<br>sedang kami upload</p>
+                        <div class="mt-4 flex justify-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" style="animation-delay: 0s;"></div>
+                            <div class="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" style="animation-delay: 0.2s;"></div>
+                            <div class="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" style="animation-delay: 0.4s;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
             if (filtered.length === 0) {
-                list.innerHTML = `<div class="col-span-full text-center py-20 text-gray-500">Tidak ada produk sesuai pencarian atau filter.</div>`;
+                list.innerHTML = `<div class="col-span-full text-center py-20 text-gray-500">Tidak ada produk sesuai pencarian atau filter.</div>` + comingSoonCard;
                 return;
             }
 
@@ -997,12 +1209,13 @@
                         <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">${p.karat}</p>
                         <h3 class="font-bold text-gray-800 text-sm md:text-base truncate mb-1">${p.name}</h3>
                         <p class="text-indigo-800 font-black text-lg">Rp ${p.price.toLocaleString('id-ID')}</p>
+                        
                         <button onclick="addToCart(${p.id})" class="w-full mt-3 bg-gray-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition">
                             + Keranjang
                         </button>
                     </div>
                 </div>`;
-            }).join('');
+            }).join('') + comingSoonCard;
         }
 
         function filterProduct(cat) {
@@ -1035,7 +1248,13 @@
             document.getElementById('detail-img').onclick = () => openZoom(document.getElementById('detail-img').src);
             document.getElementById('detail-title').innerText = p.name;
             document.getElementById('detail-price').innerText = `Rp ${p.price.toLocaleString('id-ID')}`;
-                document.getElementById('detail-desc').innerHTML = `${p.description}<br><br><strong>Emas:</strong> ${p.emas || '-'}<br><strong>Karat:</strong> ${p.karat || '-'}<br><strong>Berat:</strong> ${p.berat || '-'}`;
+                // render description and include ukuran tepat setelah 'Berat' jika produk cincin memiliki size
+                let descHtml = `${p.description}<br><br><strong>Emas:</strong> ${p.emas || '-'}<br><strong>Karat:</strong> ${p.karat || '-'}<br><strong>Berat:</strong> ${p.berat || '-'}`;
+                if (p.category === 'Cincin' && p.size) descHtml += `<br><strong>Ukuran:</strong> ${p.size}`;
+                document.getElementById('detail-desc').innerHTML = descHtml;
+
+                // set product id on modal for share helpers
+                document.getElementById('detail-modal').dataset.productId = p.id;
 
             document.getElementById('detail-thumbnails').innerHTML = images.map((img, index) => `
                 <button type="button" onclick="setDetailImage('${img}', this)" class="rounded-xl overflow-hidden border border-gray-200 ${index === 0 ? 'ring-2 ring-indigo-600' : ''}">
@@ -1044,6 +1263,7 @@
             `).join('');
             
             document.getElementById('detail-add-btn').onclick = function() {
+                // when adding from modal, use product.size (readonly) if available
                 addToCart(p.id);
                 closeDetail();
             };
@@ -1069,15 +1289,24 @@
         }
 
         /** --- 5. LOGIKA KERANJANG --- **/
-        function addToCart(id) {
+        function addToCart(id, size) {
             const p = products.find(item => item.id === id);
-            cart.push(p);
+            if (!p) return;
+            const item = Object.assign({}, p);
+            // Prefer explicit size parameter, otherwise fall back to product.size
+            if (size) {
+                item.selectedSize = size;
+            } else if (p.size) {
+                item.selectedSize = p.size;
+            }
+
+            cart.push(item);
             saveCart();
             updateUI();
-            
+
             // Notifikasi simpel
-            const btn = event.currentTarget;
-            if(btn.id !== 'detail-add-btn') {
+            const btn = (typeof event !== 'undefined' && event && event.currentTarget) ? event.currentTarget : null;
+            if (btn && btn.id !== 'detail-add-btn') {
                 const originalText = btn.innerText;
                 btn.innerText = "✓ Berhasil";
                 btn.classList.replace('bg-gray-900', 'bg-green-600');
@@ -1108,6 +1337,7 @@
                     <div class="flex-1">
                         <p class="text-xs font-bold text-gray-800">${p.name}</p>
                         <p class="text-sm text-indigo-700 font-black">Rp ${p.price.toLocaleString('id-ID')}</p>
+                        ${p.selectedSize ? `<p class="text-xs text-gray-500">Ukuran: ${p.selectedSize}</p>` : ''}
                     </div>
                     <button onclick="remove(${i})" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash-alt"></i></button>
                 </div>`;
@@ -1129,7 +1359,7 @@
         function sendToWhatsApp() {
             if (cart.length === 0) return alert("Keranjang belanja masih kosong!");
             
-            const WA_NUMBER = "628111317166"; // GANTI DENGAN NOMOR HP KAMU
+            const WA_NUMBER = "6285157075592"; // GANTI DENGAN NOMOR HP KAMU
             let text = "*PESANAN BARU - KARYABARU*\n";
             text += "--------------------------------------\n";
             
@@ -1137,6 +1367,7 @@
             cart.forEach((p, i) => {
                 const imageUrl = new URL(getProductImages(p)[0], document.baseURI).href;
                 text += `${i+1}. *${p.name}*\n   Harga: Rp ${p.price.toLocaleString('id-ID')}\n`;
+                if (p.selectedSize) text += `   Ukuran: ${p.selectedSize}\n`;
                 total += p.price;
             });
             
@@ -1149,24 +1380,34 @@
 
         /** --- 7. SHARE PRODUK --- **/
         function shareToWhatsApp() {
-            const product = products.find(p => document.getElementById('detail-modal').dataset.productId == p.id || (document.getElementById('detail-title') && document.getElementById('detail-title').innerText === p.name));
+            const modal = document.getElementById('detail-modal');
+            const titleEl = document.getElementById('detail-title');
+            const product = products.find(p => (modal && modal.dataset.productId == p.id) || (titleEl && titleEl.innerText === p.name));
             if (!product) {
-                const title = document.getElementById('detail-title').innerText;
+                const title = titleEl ? titleEl.innerText : '';
                 const productData = products.find(p => p.name === title);
                 if (productData) {
-                    const message = `Hai! Saya tertarik dengan produk ini:\n\n*${productData.name}*\nHarga: Rp ${productData.price.toLocaleString('id-ID')}\nBerat: ${productData.berat}\nEmas: ${productData.emas}\n\nApa ada stok? Bisa di-order?`;
-                    window.open(`https://wa.me/628111317166?text=${encodeURIComponent(message)}`, '_blank');
+                    let message = `Hai! Saya tertarik dengan produk ini:\n\n*${productData.name}*\nHarga: Rp ${productData.price.toLocaleString('id-ID')}\nBerat: ${productData.berat}\nEmas: ${productData.emas}\n`;
+                    if (productData.size) message += `Ukuran: ${productData.size}\n`;
+                    message += `\nApa ada stok? Bisa di-order?`;
+                    window.open(`https://wa.me/6285157075592?text=${encodeURIComponent(message)}`, '_blank');
                 }
                 return;
             }
-            const message = `Hai! Saya tertarik dengan produk ini:\n\n*${product.name}*\nHarga: Rp ${product.price.toLocaleString('id-ID')}\nBerat: ${product.berat}\nEmas: ${product.emas}\n\nApa ada stok? Bisa di-order?`;
-            window.open(`https://wa.me/628111317166?text=${encodeURIComponent(message)}`, '_blank');
+            let message = `Hai! Saya tertarik dengan produk ini:\n\n*${product.name}*\nHarga: Rp ${product.price.toLocaleString('id-ID')}\nBerat: ${product.berat}\nEmas: ${product.emas}\n`;
+            if (product.size) message += `Ukuran: ${product.size}\n`;
+            message += `\nApa ada stok? Bisa di-order?`;
+            window.open(`https://wa.me/6285157075592?text=${encodeURIComponent(message)}`, '_blank');
         }
 
         function shareToInstagram() {
             const instagramProfile = "https://instagram.com/tokoemas_karyabaru";
-            const title = document.getElementById('detail-title').innerText;
-            alert(`Kunjungi Instagram kami untuk melihat produk ini dan konten menarik lainnya: ${instagramProfile}`);
+            const modal = document.getElementById('detail-modal');
+            const titleEl = document.getElementById('detail-title');
+            const product = products.find(p => (modal && modal.dataset.productId == p.id) || (titleEl && titleEl.innerText === p.name));
+            let info = `Kunjungi Instagram kami untuk melihat produk ini: ${instagramProfile}`;
+            if (product && product.size) info = `Produk: ${product.name}\nUkuran: ${product.size}\n\n` + info;
+            alert(info);
             window.open(instagramProfile, '_blank');
         }
 
@@ -1200,6 +1441,9 @@
         loadCart();
         loadTheme();
         updateUI();
+        // Rekam kunjungan dan perbarui badge
+        recordVisit();
+        updateVisitorCount();
         // Inisialisasi Produk
         renderProducts();
     </script>
