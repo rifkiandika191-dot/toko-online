@@ -69,15 +69,3 @@ npm start                 # http://localhost:3000
 | PUT | `/api/products/:id` | admin | ubah produk |
 | DELETE | `/api/products/:id` | admin | hapus produk |
 | POST | `/api/upload` | admin | upload gambar (maks 6 file, 8MB) → URL `/uploads/...` |
-| POST | `/api/generate-description` | admin | AI: buat deskripsi produk dari foto (Claude vision, Haiku) |
-
-## Fitur AI: deskripsi otomatis dari foto (opsional)
-
-Di `/admin.html`, setelah upload foto, klik **"Buat otomatis dari foto"** untuk
-menghasilkan deskripsi produk berbahasa Indonesia dari gambar (pakai Claude vision).
-
-Aktifkan dengan menambah variable di Railway:
-- `ANTHROPIC_API_KEY` = kunci dari https://console.anthropic.com → API Keys
-
-Tanpa key ini, tombol AI nonaktif (mengembalikan 503) tapi fitur lain tetap jalan.
-Model yang dipakai: `claude-haiku-4-5` (murah). Setiap klik = 1 panggilan API berbayar.
