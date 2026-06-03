@@ -36,6 +36,20 @@ async function initSchema() {
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id           SERIAL PRIMARY KEY,
+      customer_name    TEXT NOT NULL,
+      customer_phone   TEXT NOT NULL,
+      customer_address TEXT,
+      items        JSONB NOT NULL DEFAULT '[]',
+      total        INTEGER NOT NULL DEFAULT 0,
+      status       TEXT NOT NULL DEFAULT 'baru',
+      note         TEXT,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
 }
 
 // Ambil data awal dari public/products.js (window.PRODUCTS).

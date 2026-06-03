@@ -3,7 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KARYABARU - Katalog Perhiasan & Logam Mulia</title>
+    <title>KARYABARU - Katalog Perhiasan & Logam Mulia Emas</title>
+
+    <!-- SEO -->
+    <meta name="description" content="KARYABARU - katalog perhiasan & logam mulia: cincin, gelang, kalung emas berkualitas. Harga emas real-time, pemesanan mudah via WhatsApp.">
+    <meta name="keywords" content="perhiasan emas, cincin emas, gelang emas, kalung emas, logam mulia, KARYABARU, toko emas online">
+    <meta name="theme-color" content="#312e81">
+    <link rel="canonical" href="https://toko-online-production-e2ab.up.railway.app/">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%8E%3C/text%3E%3C/svg%3E">
+
+    <!-- Open Graph (preview saat dibagikan ke WhatsApp / Facebook) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="KARYABARU">
+    <meta property="og:title" content="KARYABARU - Katalog Perhiasan & Logam Mulia Emas">
+    <meta property="og:description" content="Koleksi cincin, gelang, dan kalung emas berkualitas. Harga emas real-time, pemesanan mudah via WhatsApp.">
+    <meta property="og:url" content="https://toko-online-production-e2ab.up.railway.app/">
+    <meta property="og:image" content="https://toko-online-production-e2ab.up.railway.app/img/kupukupu.png">
+    <meta property="og:image:alt" content="Perhiasan emas KARYABARU">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KARYABARU - Katalog Perhiasan & Logam Mulia Emas">
+    <meta name="twitter:description" content="Koleksi cincin, gelang, dan kalung emas berkualitas. Pemesanan mudah via WhatsApp.">
+    <meta name="twitter:image" content="https://toko-online-production-e2ab.up.railway.app/img/kupukupu.png">
+
     <!-- Framework & Icons -->
     <script>tailwind.config = { darkMode: 'class' };</script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -583,13 +606,19 @@
                 <!-- Item masuk ke sini -->
             </div>
             <div class="p-6 border-t bg-white">
-                <div class="flex justify-between text-2xl font-black mb-6">
+                <div class="space-y-2 mb-4">
+                    <input id="cust-name" type="text" placeholder="Nama penerima *" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500" />
+                    <input id="cust-phone" type="tel" placeholder="No. HP / WhatsApp *" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500" />
+                    <textarea id="cust-address" rows="2" placeholder="Alamat lengkap" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex justify-between text-2xl font-black mb-4">
                     <span class="text-gray-600">Total:</span>
                     <span id="cart-total" class="text-indigo-800 text-3xl">Rp 0</span>
                 </div>
                 <button onclick="sendToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-xl transition-all">
                     <i class="fab fa-whatsapp text-2xl"></i> Pesan via WhatsApp
                 </button>
+                <p id="checkout-status" class="text-center text-sm mt-2"></p>
             </div>
         </div>
     </div>
@@ -1187,24 +1216,57 @@
         }
 
         /** --- 6. WHATSAPP SENDER --- **/
-        function sendToWhatsApp() {
+        async function sendToWhatsApp() {
             if (cart.length === 0) return alert("Keranjang belanja masih kosong!");
-            
+
             const WA_NUMBER = "6285157075592"; // GANTI DENGAN NOMOR HP KAMU
+            const name = (document.getElementById('cust-name').value || '').trim();
+            const phone = (document.getElementById('cust-phone').value || '').trim();
+            const address = (document.getElementById('cust-address').value || '').trim();
+            const status = document.getElementById('checkout-status');
+
+            if (!name || !phone) {
+                status.textContent = 'Mohon isi nama & nomor HP dulu.';
+                status.className = 'text-center text-sm mt-2 text-red-500';
+                return;
+            }
+
+            // Susun pesan WhatsApp + LINK GAMBAR tiap produk (bisa dibuka penjual).
+            let total = 0;
             let text = "*PESANAN BARU - KARYABARU*\n";
             text += "--------------------------------------\n";
-            
-            let total = 0;
             cart.forEach((p, i) => {
-                text += `${i+1}. *${p.name}*\n   Harga: Rp ${p.price.toLocaleString('id-ID')}\n`;
+                const imgUrl = p.images && p.images[0]
+                    ? new URL(p.images[0], location.origin).href : '';
+                text += `${i + 1}. *${p.name}*\n   Harga: Rp ${p.price.toLocaleString('id-ID')}\n`;
                 if (p.selectedSize) text += `   Ukuran: ${p.selectedSize}\n`;
+                if (imgUrl) text += `   Foto: ${imgUrl}\n`;
                 total += p.price;
             });
-            
             text += "--------------------------------------\n";
-            text += `*TOTAL PEMBAYARAN: Rp ${total.toLocaleString('id-ID')}*\n\n`;
-            text += "Nama Penerima :\nAlamat Lengkap :\nNo. HP :\n*NOTED: HARGA DAPAT BERUBAH SESUAI HARGA EMAS SAAT PEMESANAN*"
-            
+            text += `*TOTAL: Rp ${total.toLocaleString('id-ID')}*\n\n`;
+            text += `*Nama:* ${name}\n*No. HP:* ${phone}\n*Alamat:* ${address || '-'}\n\n`;
+            text += "_NOTED: HARGA DAPAT BERUBAH SESUAI HARGA EMAS SAAT PEMESANAN_";
+
+            // Simpan pesanan ke database (best-effort; tetap lanjut ke WA walau gagal).
+            status.textContent = 'Memproses pesanan...';
+            status.className = 'text-center text-sm mt-2 text-gray-500';
+            try {
+                await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name, phone, address,
+                        items: cart.map(p => ({
+                            id: p.id, name: p.name, price: p.price,
+                            qty: 1, size: p.selectedSize || null,
+                            image: (p.images && p.images[0]) || null,
+                        })),
+                    }),
+                });
+            } catch (e) { /* abaikan; pesanan tetap dikirim via WA */ }
+
+            status.textContent = 'Membuka WhatsApp...';
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
