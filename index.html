@@ -269,9 +269,7 @@
             <button onclick="filterProduct('Semua')" class="cat-btn flex-none px-6 py-2 rounded-full bg-indigo-600 text-white text-sm font-bold shadow-md">Semua</button>
             <button onclick="filterProduct('Kalung')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Kalung</button>
             <button onclick="filterProduct('Cincin')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Cincin</button>
-            <button onclick="filterProduct('Anting')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Anting</button>
             <button onclick="filterProduct('Gelang')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Gelang</button>
-            <button onclick="filterProduct('Kalung Sultan')" class="cat-btn flex-none px-6 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-indigo-50">Kalung Sultan</button>
 
         </div>
     </div>
@@ -596,6 +594,8 @@
         </div>
     </div>
 
+    <!-- Data produk dipisah ke products.js (mudah tambah barang) -->
+    <script src="products.js"></script>
     <script>
         /** --- 1. HARGA EMAS REAL-TIME --- **/
         const GOLD_PRICE_KEY = 'gold_price_last';
@@ -647,179 +647,8 @@
         setInterval(fetchGoldPrice, 60000);
 
         /** --- 2. DATA PRODUK --- **/
-        let products = [
-            { 
-                id: 1,
-                category: "Kalung Sultan",
-                name: "Kalung Sultan Kupu-Kupu 25 gram",
-                price: 50000000,
-                images: ["img/kupukupu.png"],
-                emas: "700",
-                karat: "700",
-                berat: "25 gram",
-                description: "Kalung Sultan dengan desain kupu-kupu mewah dan detail ukiran emas yang halus. Cocok untuk acara istimewa."
-            },
-            { 
-                id: 2,
-                category: "Kalung Sultan",
-                name: "Kalung Sultan 23,7 gram",
-                price: 28440000,
-                images: ["img/kalungsultan1.png", "img/kalungsultan2.png" ,"img/kalungsultan3.png"],
-                emas: "420",
-                karat: "420",
-                berat: "23.7 gram",
-                description: "Kalung Sultan dengan desain mewah dan detail ukiran emas yang halus. Cocok untuk acara istimewa."
-            },
-            { 
-                id: 3,
-                category: "Gelang",
-                name: "Gelang Fusion SS",
-                price: 6000000,
-                images: ["img/gelangfusionss.png",],
-                emas: "420",
-                karat: "420",
-                berat: "5 gram",
-                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 4,
-                category: "Gelang",
-                name: "Gelang Fusion LM",
-                price: 6000000,
-                images: ["img/Gelang Fusion LM.png",],
-                emas: "420",
-                karat: "420",
-                berat: "5 gram",
-                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 5,
-                category: "Gelang",
-                name: "Gelang Fusion Bunga",
-                price: 7200000,
-                images: ["img/Gelang Fusion Bunga3.png", "img/Gelang Fusion Bunga2.png" ,"img/Gelang Fusion Bunga1.png"],
-                emas: "420",
-                karat: "420",
-                berat: "6 gram",
-                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 6,
-                category: "Gelang",
-                name: "Gelang Fusion Pita",
-                price: 22700000,
-                images: ["img/Gelang Fusion Pita1.png", "img/Gelang Fusion Pita2.png" ,],
-                emas: "700",
-                karat: "700",
-                berat: "11,35 gram",
-                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 7,
-                category: "Gelang",
-                name: "Gelang Tikar",
-                price: 25480000,
-                images: ["img/Gelang Tikar1.png", "img/Gelang Tikar2.png" , "img/Gelang Tikar3.png"],
-                emas: "23",
-                karat: "23",
-                berat: "10,4 gram",
-                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 8,
-                category: "Gelang",
-                name: "Gelang Boba",
-                price: 47701500,
-                images: ["img/Gelang Boba1.png", "img/Gelang Boba2.png" , "img/Gelang Boba3.png"],
-                emas: "23",
-                karat: "23",
-                berat: "19,47 gram",
-                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-             {
-                id: 9,
-                category: "Gelang Borobudur",
-                name: "Gelang Borobudur",
-                price: 50000000,
-                images: ["img/Gelang Borobudur1.png",],
-                emas: "700",
-                karat: "700",
-                berat: "25 gram",
-                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 10,
-                category: "Gelang Kusion Bunga",
-                name: "Gelang Kusion Bunga",
-                price: 28440000,
-                images: ["img/Gelang Kusion Bunga1.png", "img/Gelang Kusion Bunga2.png" ,"img/Gelang Kusion Bunga3.png"],
-                emas: "700",
-                karat: "700",
-                berat: "14,22 gram",
-                description: "Gelang dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 11,
-                category: "Cincin",
-                name: "Cincin Roda",
-                price: 2064000,
-                images: ["img/Cincin Roda1.png", "img/Cincin Roda2.png" ,],
-                emas: "420",
-                karat: "420",
-                berat: "1,72 gram",
-                size: "15",
-                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 12,
-                category: "Cincin",
-                name: "Cincin SS",
-                price: 6096000,
-                images: ["img/Cincin SS1.png", "img/Cincin SS2.png" ,],
-                emas: "420",
-                karat: "420",
-                berat: "5,08 gram",
-                size: "14",
-                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 13,
-                category: "Cincin",
-                name: "Cincin Durian",
-                price: 4200000,
-                images: ["img/Cincin Durian1.png", "img/Cincin Durian2.png" ,],
-                emas: "700",
-                karat: "700",
-                berat: "2,1 gram",
-                size: "15",
-                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 14,
-                category: "Cincin",
-                name: "Cincin 700",
-                price: 4000000,
-                images: ["img/Cincin7001.png", "img/Cincin7002.png" ,],
-                emas: "700",
-                karat: "700",
-                berat: "2 gram",
-                size: "14",
-                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            {
-                id: 15,
-                category: "Cincin",
-                name: "Cincin AD",
-                price: 4000000,
-                images: ["img/CincinAD.png",],
-                emas: "700",
-                karat: "700",
-                berat: "2 gram",
-                size: "12",
-                description: "Cincin dengan desain modern dan elegan, terbuat dari emas berkualitas tinggi. Cocok untuk melengkapi penampilan Anda sehari-hari atau acara khusus."
-            },
-            
-        ];
+        // Data produk dimuat dari products.js (window.PRODUCTS). Edit produk DI SANA.
+        let products = Array.isArray(window.PRODUCTS) ? window.PRODUCTS.slice() : [];
 
         // Load saved products from localStorage (if any)
         const STORAGE_KEY = 'products_karyabaru';
@@ -1139,7 +968,9 @@
 
         function renderProducts() {
             const list = document.getElementById('product-list');
-            let filtered = currentCategory === 'Semua' ? [...products] : products.filter(p => p.category === currentCategory);
+            let filtered = currentCategory === 'Semua'
+                ? [...products]
+                : products.filter(p => (p.category || '').toLowerCase().startsWith(currentCategory.toLowerCase()));
 
             if (currentSearch) {
                 filtered = filtered.filter(p => {
@@ -1199,7 +1030,7 @@
                         <i class="fas fa-heart"></i>
                     </button>
                     <div class="relative overflow-hidden aspect-square cursor-pointer" onclick="openDetail(${p.id})">
-                        <img src="${mainImage}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <img src="${mainImage}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22&gt;&lt;rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eef2ff%22/&gt;&lt;text x=%2250%25%22 y=%2250%25%22 font-family=%22sans-serif%22 font-size=%2218%22 fill=%22%236366f1%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22&gt;Foto tidak ditemukan&lt;/text&gt;&lt;/svg&gt;'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                             <span class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-xs shadow-lg">Lihat Detail</span>
                         </div>
@@ -1365,7 +1196,6 @@
             
             let total = 0;
             cart.forEach((p, i) => {
-                const imageUrl = new URL(getProductImages(p)[0], document.baseURI).href;
                 text += `${i+1}. *${p.name}*\n   Harga: Rp ${p.price.toLocaleString('id-ID')}\n`;
                 if (p.selectedSize) text += `   Ukuran: ${p.selectedSize}\n`;
                 total += p.price;
