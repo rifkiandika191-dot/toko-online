@@ -768,6 +768,23 @@
             return Array.isArray(product.images) ? product.images : [product.image || ''];
         }
 
+        // Ambil angka berat (gram) dari teks seperti "5 gram" / "5,5 g" -> 5.5
+        function parseWeight(berat) {
+            if (berat == null) return 0;
+            const m = String(berat).replace(',', '.').match(/[\d.]+/);
+            return m ? parseFloat(m[0]) || 0 : 0;
+        }
+
+        // Baca semua input pencarian/filter lalu render ulang katalog.
+        function applyFilters() {
+            currentSearch = (document.getElementById('search-input').value || '').trim().toLowerCase();
+            currentSort = document.getElementById('sort-select').value;
+            currentKarat = document.getElementById('karat-select').value;
+            currentMinWeight = parseFloat(document.getElementById('min-weight').value) || 0;
+            currentMaxWeight = parseFloat(document.getElementById('max-weight').value) || 0;
+            renderProducts();
+        }
+
         function renderProducts() {
             const list = document.getElementById('product-list');
             let filtered = currentCategory === 'Semua'
@@ -776,7 +793,8 @@
 
             if (currentSearch) {
                 filtered = filtered.filter(p => {
-                    const text = `${p.name} ${p.category} ${p.description} ${p.emas} ${p.karat} ${p.berat}`.toLowerCase();
+                    const text = [p.name, p.category, p.description, p.emas, p.karat, p.berat]
+                        .filter(Boolean).join(' ').toLowerCase();
                     return text.includes(currentSearch);
                 });
             }
