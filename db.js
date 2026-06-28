@@ -41,6 +41,12 @@ async function initSchema() {
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS badge TEXT DEFAULT ''`);
   // Kolom bersertifikat (jaminan keaslian).
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS certified BOOLEAN NOT NULL DEFAULT false`);
+  // Mode draft: produk disiapkan dulu, belum tampil di etalase publik.
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS draft BOOLEAN NOT NULL DEFAULT false`);
+  // Statistik: berapa kali tombol "Pesan" diklik untuk produk ini.
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS order_clicks INTEGER NOT NULL DEFAULT 0`);
+  // Slug URL (untuk halaman per-produk /produk/<slug>).
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS slug TEXT`);
 
   // Pengaturan toko (key-value): nomor WA, nama toko, jam buka, dll.
   await pool.query(`
@@ -55,9 +61,28 @@ async function initSchema() {
       ('store_name', 'KARYABARU'),
       ('hours', ''),
       ('promo_text', 'Harga emas real-time kini tampil lebih menarik di banner promo.'),
-      ('address', '')
+      ('address', ''),
+      ('usd_rate', '17800')
      ON CONFLICT (key) DO NOTHING`,
   );
+}
+
+// Buat slug URL ramah dari teks (mis. "Cincin AD" -> "cincin-ad").
+function slugify(text) {
+  return String(text || '')
+    .toLowerCase()
+    .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'produk';
+}
+
+// Pastikan setiap produk punya slug unik (id ditambahkan agar tidak bentrok).
+async function backfillSlugs() {
+  const { rows } = await pool.query('SELECT id, name FROM products WHERE slug IS NULL OR slug = \'\'');
+  for (const r of rows) {
+    const slug = `${slugify(r.name)}-${r.id}`;
+    await pool.query('UPDATE products SET slug=$1 WHERE id=$2', [slug, r.id]);
+  }
 }
 
 // Ambil data awal dari public/products.js (window.PRODUCTS).
@@ -111,6 +136,7 @@ async function seedIfEmpty() {
 async function init() {
   await initSchema();
   await seedIfEmpty();
+  await backfillSlugs();
 }
 
-module.exports = { pool, init };
+module.exports = { pool, init, slugify };

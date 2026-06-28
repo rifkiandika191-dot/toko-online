@@ -8,9 +8,11 @@ const crypto = require('crypto');
 const express = require('express');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
-const { pool, init } = require('./db');
+const sharp = require('sharp');
+const { pool, init, slugify } = require('./db');
 
 const app = express();
+app.set('trust proxy', true); // di belakang proxy Railway: protocol/host benar
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const JWT_SECRET = process.env.JWT_SECRET || 'ganti-secret-ini';
@@ -69,7 +71,35 @@ function rowToProduct(r) {
     active: r.active,
     badge: r.badge || '',
     certified: r.certified === true,
+    draft: r.draft === true,
+    order_clicks: r.order_clicks || 0,
+    slug: r.slug || '',
   };
+}
+
+// --- Password admin: simpan hash (scrypt) di tabel settings ---
+function hashPassword(plain) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(plain), salt, 64).toString('hex');
+  return `scrypt$${salt}$${hash}`;
+}
+function verifyPassword(plain, stored) {
+  if (!stored || !stored.startsWith('scrypt$')) return false;
+  const [, salt, hash] = stored.split('$');
+  const test = crypto.scryptSync(String(plain), salt, 64).toString('hex');
+  const a = Buffer.from(hash, 'hex');
+  const b = Buffer.from(test, 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+async function getSetting(key) {
+  const { rows } = await pool.query('SELECT value FROM settings WHERE key=$1', [key]);
+  return rows.length ? rows[0].value : null;
+}
+// Cek password admin: pakai hash dari DB kalau ada, kalau belum pakai ADMIN_PASSWORD env.
+async function checkAdminPassword(plain) {
+  const stored = await getSetting('admin_password_hash').catch(() => null);
+  if (stored) return verifyPassword(plain, stored);
+  return !!plain && plain === ADMIN_PASSWORD;
 }
 
 const ALLOWED_BADGES = ['', 'Baru', 'Terlaris', 'Stok Terbatas', 'Habis'];
@@ -95,6 +125,7 @@ function parseProductBody(b) {
     active: b.active === false || b.active === 'false' ? false : true,
     badge: ALLOWED_BADGES.includes(b.badge) ? b.badge : '',
     certified: b.certified === true || b.certified === 'true',
+    draft: b.draft === true || b.draft === 'true',
   };
 }
 
@@ -115,25 +146,60 @@ function requireAuth(req, res, next) {
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 // Login admin -> token
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', async (req, res) => {
   const { password } = req.body || {};
-  if (!password || password !== ADMIN_PASSWORD) {
+  const ok = await checkAdminPassword(password).catch(() => false);
+  if (!ok) {
     return res.status(401).json({ error: 'Password salah' });
   }
   const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '12h' });
   res.json({ token });
 });
 
-// Publik: produk aktif untuk etalase
+// Admin: ganti password dari dashboard
+app.put('/api/admin/password', requireAuth, async (req, res) => {
+  const { current, newPassword } = req.body || {};
+  const ok = await checkAdminPassword(current).catch(() => false);
+  if (!ok) return res.status(401).json({ error: 'Password saat ini salah' });
+  if (!newPassword || String(newPassword).length < 6) {
+    return res.status(400).json({ error: 'Password baru minimal 6 karakter' });
+  }
+  try {
+    const hash = hashPassword(newPassword);
+    await pool.query(
+      `INSERT INTO settings (key, value) VALUES ('admin_password_hash', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+      [hash],
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[PUT /api/admin/password]', e.message);
+    res.status(500).json({ error: 'Gagal menyimpan password' });
+  }
+});
+
+// Publik: produk aktif & bukan draft untuk etalase
 app.get('/api/products', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM products WHERE active = true ORDER BY id ASC',
+      'SELECT * FROM products WHERE active = true AND draft = false ORDER BY id ASC',
     );
     res.json(rows.map(rowToProduct));
   } catch (e) {
     console.error('[GET /api/products]', e.message);
     res.status(500).json({ error: 'Gagal mengambil produk' });
+  }
+});
+
+// Publik: catat klik tombol "Pesan" (statistik). Tidak butuh auth.
+app.post('/api/products/:id/click', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: 'ID tidak valid' });
+  try {
+    await pool.query('UPDATE products SET order_clicks = order_clicks + 1 WHERE id=$1', [id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(200).json({ ok: false }); // jangan ganggu UX kalau gagal
   }
 });
 
@@ -155,12 +221,14 @@ app.post('/api/products', requireAuth, async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      `INSERT INTO products (category,name,price,images,emas,karat,berat,size,description,stock,active,badge,certified)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+      `INSERT INTO products (category,name,price,images,emas,karat,berat,size,description,stock,active,badge,certified,draft)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
       [p.category, p.name, p.price, JSON.stringify(p.images), p.emas, p.karat,
-        p.berat, p.size, p.description, p.stock, p.active, p.badge, p.certified],
+        p.berat, p.size, p.description, p.stock, p.active, p.badge, p.certified, p.draft],
     );
-    res.status(201).json(rowToProduct(rows[0]));
+    const slug = `${slugify(p.name)}-${rows[0].id}`;
+    const { rows: r2 } = await pool.query('UPDATE products SET slug=$1 WHERE id=$2 RETURNING *', [slug, rows[0].id]);
+    res.status(201).json(rowToProduct(r2[0]));
   } catch (e) {
     console.error('[POST /api/products]', e.message);
     res.status(500).json({ error: 'Gagal menambah produk' });
@@ -176,11 +244,12 @@ app.put('/api/products/:id', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Nama dan kategori wajib diisi' });
   }
   try {
+    const slug = `${slugify(p.name)}-${id}`;
     const { rows } = await pool.query(
       `UPDATE products SET category=$1,name=$2,price=$3,images=$4,emas=$5,karat=$6,
-        berat=$7,size=$8,description=$9,stock=$10,active=$11,badge=$12,certified=$13 WHERE id=$14 RETURNING *`,
+        berat=$7,size=$8,description=$9,stock=$10,active=$11,badge=$12,certified=$13,draft=$14,slug=$15 WHERE id=$16 RETURNING *`,
       [p.category, p.name, p.price, JSON.stringify(p.images), p.emas, p.karat,
-        p.berat, p.size, p.description, p.stock, p.active, p.badge, p.certified, id],
+        p.berat, p.size, p.description, p.stock, p.active, p.badge, p.certified, p.draft, slug, id],
     );
     if (!rows.length) return res.status(404).json({ error: 'Produk tidak ditemukan' });
     res.json(rowToProduct(rows[0]));
@@ -203,9 +272,27 @@ app.delete('/api/products/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Admin: upload gambar -> kembalikan URL permanen
+// Kompres & perkecil 1 gambar di tempat (overwrite). Format DIPERTAHANKAN agar
+// cocok dengan ekstensi/Content-Type. GIF dibiarkan (bisa animasi).
+async function compressImage(file) {
+  if (file.mimetype === 'image/gif') return;
+  try {
+    let img = sharp(file.path)
+      .rotate() // perbaiki orientasi dari EXIF HP
+      .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true });
+    if (file.mimetype === 'image/png') img = img.png({ quality: 80, compressionLevel: 9 });
+    else if (file.mimetype === 'image/webp') img = img.webp({ quality: 80 });
+    else img = img.jpeg({ quality: 80, mozjpeg: true });
+    const buf = await img.toBuffer();
+    await fs.promises.writeFile(file.path, buf);
+  } catch (e) {
+    console.warn('[compressImage]', file.filename, e.message); // pakai file asli kalau gagal
+  }
+}
+
+// Admin: upload gambar -> kompres -> kembalikan URL permanen
 app.post('/api/upload', requireAuth, (req, res) => {
-  upload.array('images', 6)(req, res, (err) => {
+  upload.array('images', 6)(req, res, async (err) => {
     if (err) {
       const msg = err.code === 'LIMIT_FILE_SIZE'
         ? 'Ukuran file maksimal 8MB'
@@ -214,13 +301,14 @@ app.post('/api/upload', requireAuth, (req, res) => {
     }
     const files = req.files || [];
     if (!files.length) return res.status(400).json({ error: 'Tidak ada file' });
+    await Promise.all(files.map(compressImage));
     const urls = files.map((f) => `/uploads/${f.filename}`);
     res.json({ urls });
   });
 });
 
 // ---------- Pengaturan toko ----------
-const ALLOWED_SETTINGS = ['whatsapp', 'store_name', 'hours', 'promo_text', 'address'];
+const ALLOWED_SETTINGS = ['whatsapp', 'store_name', 'hours', 'promo_text', 'address', 'usd_rate'];
 
 // Publik: ambil pengaturan toko (dipakai etalase untuk nomor WA dll)
 app.get('/api/settings', async (req, res) => {
@@ -254,6 +342,60 @@ app.put('/api/admin/settings', requireAuth, async (req, res) => {
   } catch (e) {
     console.error('[PUT /api/admin/settings]', e.message);
     res.status(500).json({ error: 'Gagal menyimpan pengaturan' });
+  }
+});
+
+// ---------- Halaman per-produk (SEO + share) ----------
+const INDEX_HTML_PATH = path.join(__dirname, 'public', 'index.html');
+
+function htmlEscape(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+// Sajikan index.html dengan meta OG + JSON-LD khusus produk, lalu auto-buka detailnya.
+app.get('/produk/:slug', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM products WHERE slug=$1 AND active = true AND draft = false LIMIT 1',
+      [req.params.slug],
+    );
+    let html = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+    if (rows.length) {
+      const p = rowToProduct(rows[0]);
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const img = (p.images[0] || '').startsWith('http')
+        ? p.images[0] : origin + '/' + String(p.images[0] || '').replace(/^\//, '');
+      const title = `${p.name} - KARYABARU`;
+      const desc = (p.description || `${p.name}, emas ${p.emas || p.karat || ''} ${p.berat || ''}`).slice(0, 160);
+      const jsonLd = {
+        '@context': 'https://schema.org', '@type': 'Product',
+        name: p.name, image: img ? [img] : undefined,
+        description: p.description || desc, category: p.category,
+        brand: { '@type': 'Brand', name: 'KARYABARU' },
+        offers: {
+          '@type': 'Offer', priceCurrency: 'IDR', price: p.price,
+          availability: p.badge === 'Habis' || p.stock <= 0
+            ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+          url: `${origin}/produk/${p.slug}`,
+        },
+      };
+      const inject = `
+    <meta property="og:title" content="${htmlEscape(title)}">
+    <meta property="og:description" content="${htmlEscape(desc)}">
+    <meta property="og:image" content="${htmlEscape(img)}">
+    <meta property="og:url" content="${origin}/produk/${htmlEscape(p.slug)}">
+    <script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>
+    <script>window.__PRODUCT_SLUG__ = ${JSON.stringify(p.slug)};</script>
+  `;
+      html = html
+        .replace(/<title>[\s\S]*?<\/title>/, `<title>${htmlEscape(title)}</title>`)
+        .replace('</head>', inject + '</head>');
+    }
+    res.set('Cache-Control', 'no-cache').type('html').send(html);
+  } catch (e) {
+    console.error('[GET /produk/:slug]', e.message);
+    res.sendFile(INDEX_HTML_PATH);
   }
 });
 

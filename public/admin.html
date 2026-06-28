@@ -61,6 +61,7 @@
               <th class="px-4 py-3">Kategori</th>
               <th class="px-4 py-3">Harga</th>
               <th class="px-4 py-3">Stok</th>
+              <th class="px-4 py-3" title="Jumlah klik tombol Pesan"><i class="fas fa-mouse-pointer mr-1"></i>Klik</th>
               <th class="px-4 py-3">Aktif</th>
               <th class="px-4 py-3 text-right">Aksi</th>
             </tr>
@@ -152,6 +153,9 @@
           <label class="flex items-center gap-2 text-sm font-bold text-slate-600">
             <input id="f-certified" type="checkbox" class="w-4 h-4" /> Bersertifikat
           </label>
+          <label class="flex items-center gap-2 text-sm font-bold text-amber-600">
+            <input id="f-draft" type="checkbox" class="w-4 h-4" /> Draft (belum tampil)
+          </label>
         </div>
         <div>
           <label class="text-xs font-bold text-slate-500">Deskripsi</label>
@@ -195,8 +199,21 @@
           <label class="text-xs font-bold text-slate-500">Teks Promo (banner berjalan)</label>
           <input id="s-promo_text" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="Promo spesial minggu ini..." />
         </div>
+        <div>
+          <label class="text-xs font-bold text-slate-500">Kurs USD → IDR (untuk estimasi harga emas)</label>
+          <input id="s-usd_rate" type="number" min="0" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="17800" />
+          <p class="text-[11px] text-slate-400 mt-1">Dipakai mengubah harga emas (USD/oz) menjadi Rupiah/gram di etalase.</p>
+        </div>
         <p id="settings-error" class="text-red-500 text-sm hidden"></p>
         <p id="settings-ok" class="text-green-600 text-sm hidden">✓ Tersimpan</p>
+
+        <div class="border-t pt-4 mt-2">
+          <p class="text-sm font-black text-slate-700 mb-2"><i class="fas fa-key mr-1 text-indigo-600"></i>Ganti Password Admin</p>
+          <input id="s-pass-current" type="password" class="w-full px-3 py-2 border rounded-lg mb-2" placeholder="Password saat ini" />
+          <input id="s-pass-new" type="password" class="w-full px-3 py-2 border rounded-lg mb-2" placeholder="Password baru (min. 6 karakter)" />
+          <button onclick="changePassword()" class="w-full bg-slate-800 text-white py-2.5 rounded-lg font-bold hover:bg-slate-900">Ubah Password</button>
+          <p id="pass-msg" class="text-sm mt-2 hidden"></p>
+        </div>
       </div>
       <div class="px-6 py-4 border-t flex justify-end gap-3">
         <button onclick="closeSettings()" class="px-5 py-2.5 rounded-lg border font-bold text-slate-600">Tutup</button>
@@ -258,7 +275,11 @@
         document.getElementById('s-hours').value = s.hours || '';
         document.getElementById('s-address').value = s.address || '';
         document.getElementById('s-promo_text').value = s.promo_text || '';
+        document.getElementById('s-usd_rate').value = s.usd_rate || '';
       } catch (e) { /* biarkan kosong */ }
+      document.getElementById('s-pass-current').value = '';
+      document.getElementById('s-pass-new').value = '';
+      document.getElementById('pass-msg').classList.add('hidden');
       document.getElementById('settings-modal').classList.remove('hidden');
     }
     function closeSettings() {
@@ -274,6 +295,7 @@
         hours: document.getElementById('s-hours').value,
         address: document.getElementById('s-address').value,
         promo_text: document.getElementById('s-promo_text').value,
+        usd_rate: document.getElementById('s-usd_rate').value.replace(/[^0-9]/g, ''),
       };
       const r = await fetch('/api/admin/settings', {
         method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
@@ -286,6 +308,36 @@
         return;
       }
       ok.classList.remove('hidden');
+    }
+
+    async function changePassword() {
+      const msg = document.getElementById('pass-msg');
+      const current = document.getElementById('s-pass-current').value;
+      const newPassword = document.getElementById('s-pass-new').value;
+      msg.classList.add('hidden');
+      if (!current || !newPassword) {
+        msg.textContent = 'Isi password lama dan baru.';
+        msg.className = 'text-sm mt-2 text-red-500';
+        msg.classList.remove('hidden');
+        return;
+      }
+      const r = await fetch('/api/admin/password', {
+        method: 'PUT', headers: authHeaders(),
+        body: JSON.stringify({ current, newPassword }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 401 && d.error && /password saat ini/i.test(d.error)) {
+        msg.textContent = d.error; msg.className = 'text-sm mt-2 text-red-500'; msg.classList.remove('hidden'); return;
+      }
+      if (r.status === 401) return logout();
+      if (!r.ok) {
+        msg.textContent = d.error || 'Gagal mengubah password.';
+        msg.className = 'text-sm mt-2 text-red-500'; msg.classList.remove('hidden'); return;
+      }
+      msg.textContent = '✓ Password berhasil diubah.';
+      msg.className = 'text-sm mt-2 text-green-600'; msg.classList.remove('hidden');
+      document.getElementById('s-pass-current').value = '';
+      document.getElementById('s-pass-new').value = '';
     }
 
     async function loadProducts() {
@@ -302,10 +354,11 @@
         tr.className = 'border-t';
         tr.innerHTML = `
           <td class="px-4 py-3"><img src="${img}" onerror="this.style.visibility='hidden'" class="w-12 h-12 object-cover rounded-lg bg-slate-100"></td>
-          <td class="px-4 py-3 font-semibold">${escapeHtml(p.name)}${p.badge ? ` <span class="ml-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 align-middle">${escapeHtml(p.badge)}</span>` : ''}</td>
+          <td class="px-4 py-3 font-semibold">${escapeHtml(p.name)}${p.badge ? ` <span class="ml-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 align-middle">${escapeHtml(p.badge)}</span>` : ''}${p.draft ? ` <span class="ml-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 align-middle">DRAFT</span>` : ''}</td>
           <td class="px-4 py-3 text-slate-500">${escapeHtml(p.category)}</td>
           <td class="px-4 py-3">Rp ${Number(p.price).toLocaleString('id-ID')}</td>
           <td class="px-4 py-3">${p.stock}</td>
+          <td class="px-4 py-3 text-center font-bold text-indigo-600">${p.order_clicks || 0}</td>
           <td class="px-4 py-3">${p.active ? '<span class="text-green-600">●</span>' : '<span class="text-slate-300">●</span>'}</td>
           <td class="px-4 py-3 text-right whitespace-nowrap">
             <button class="text-indigo-600 hover:underline mr-3">Edit</button>
@@ -336,6 +389,7 @@
       document.getElementById('f-stock').value = p ? p.stock : 0;
       document.getElementById('f-badge').value = p ? (p.badge || '') : '';
       document.getElementById('f-certified').checked = p ? !!p.certified : false;
+      document.getElementById('f-draft').checked = p ? !!p.draft : false;
       document.getElementById('f-active').checked = p ? !!p.active : true;
       document.getElementById('f-description').value = p ? (p.description || '') : '';
       document.getElementById('upload-status').textContent = '';
@@ -411,6 +465,7 @@
         stock: document.getElementById('f-stock').value,
         badge: document.getElementById('f-badge').value,
         certified: document.getElementById('f-certified').checked,
+        draft: document.getElementById('f-draft').checked,
         active: document.getElementById('f-active').checked,
         description: document.getElementById('f-description').value,
       };

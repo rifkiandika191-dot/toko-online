@@ -288,7 +288,7 @@
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <input id="search-input" oninput="applyFilters()" placeholder="Cari produk atau kategori..." class="w-full pl-11 pr-4 py-3 border rounded-full shadow-sm focus:ring-2 focus:ring-indigo-500" />
                 </div>
-                <div class="grid gap-3 sm:grid-cols-4">
+                <div class="grid gap-3 grid-cols-2 sm:grid-cols-3">
                     <select id="sort-select" onchange="applyFilters()" class="w-full px-4 py-3 border rounded-full shadow-sm bg-white">
                         <option value="default">Urutkan: Default</option>
                         <option value="price-asc">Harga terendah</option>
@@ -302,6 +302,8 @@
                     </select>
                     <input id="min-weight" type="number" min="0" step="0.1" oninput="applyFilters()" placeholder="Min berat (gram)" class="w-full px-4 py-3 border rounded-full shadow-sm" />
                     <input id="max-weight" type="number" min="0" step="0.1" oninput="applyFilters()" placeholder="Max berat (gram)" class="w-full px-4 py-3 border rounded-full shadow-sm" />
+                    <input id="min-price" type="number" min="0" step="100000" oninput="applyFilters()" placeholder="Harga min (Rp)" class="w-full px-4 py-3 border rounded-full shadow-sm" />
+                    <input id="max-price" type="number" min="0" step="100000" oninput="applyFilters()" placeholder="Harga max (Rp)" class="w-full px-4 py-3 border rounded-full shadow-sm" />
                 </div>
             </div>
         </div>
@@ -541,6 +543,7 @@
                 <span id="detail-cat" class="text-indigo-600 text-xs font-bold uppercase tracking-widest"></span>
                 <h3 id="detail-title" class="text-2xl font-black text-gray-800 mt-1"></h3>
                 <p id="detail-price" class="text-2xl font-bold text-indigo-700 mt-2"></p>
+                <p id="detail-estimate" class="hidden mt-1 text-sm text-amber-600 font-semibold"></p>
                 <div class="my-4 border-t border-gray-100 pt-4">
                     <p class="text-gray-600 text-sm leading-relaxed" id="detail-desc"></p>
                 </div>
@@ -548,6 +551,14 @@
                 <button id="detail-add-btn" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3 shadow-lg">
                     <i class="fab fa-whatsapp text-xl"></i> Pesan lewat WhatsApp
                 </button>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <button id="detail-cart-btn" class="py-3 rounded-2xl font-bold border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fas fa-cart-plus"></i> Keranjang
+                    </button>
+                    <button id="detail-share-btn" class="py-3 rounded-2xl font-bold border-2 border-gray-300 text-gray-600 hover:bg-gray-50 transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fas fa-share-nodes"></i> Bagikan
+                    </button>
+                </div>
                 <button id="ring-guide-link" onclick="openRingGuide()" class="hidden w-full mt-2 text-indigo-600 text-sm font-semibold hover:underline">
                     <i class="fas fa-ruler-horizontal mr-1"></i> Panduan ukuran cincin
                 </button>
@@ -613,11 +624,79 @@
     </div>
 
 
+    <!-- FLOATING CART BUTTON -->
+    <button onclick="openCart()" id="cart-fab" class="fixed bottom-28 right-8 z-[95] inline-flex items-center justify-center w-16 h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-xl hover:shadow-2xl transition transform hover:scale-110">
+        <i class="fas fa-cart-shopping text-2xl"></i>
+        <span id="cart-count" class="hidden absolute -top-1 -right-1 bg-yellow-400 text-indigo-900 text-xs font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white">0</span>
+    </button>
+
+    <!-- COMPARE BAR (muncul saat memilih produk untuk dibandingkan) -->
+    <div id="compare-bar" class="hidden fixed bottom-0 inset-x-0 z-[96] bg-indigo-900 text-white shadow-2xl">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <span class="text-sm font-semibold"><i class="fas fa-scale-balanced mr-2"></i><span id="compare-count">0</span> produk dipilih untuk dibandingkan</span>
+            <div class="flex items-center gap-2">
+                <button onclick="clearCompare()" class="text-sm px-4 py-2 rounded-full bg-white/15 hover:bg-white/25">Bersihkan</button>
+                <button onclick="openCompare()" class="text-sm px-5 py-2 rounded-full bg-yellow-400 text-indigo-900 font-bold hover:bg-yellow-300">Bandingkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KERANJANG -->
+    <div id="cart-modal" onclick="if(event.target===this)closeCart()" class="hidden fixed inset-0 bg-black/70 z-[110] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
+                <h3 class="font-black text-lg"><i class="fas fa-cart-shopping text-indigo-600 mr-2"></i>Keranjang</h3>
+                <button onclick="closeCart()" class="text-2xl text-gray-400 hover:text-gray-700">&times;</button>
+            </div>
+            <div id="cart-items" class="p-4 space-y-3"></div>
+            <div class="px-6 py-4 border-t sticky bottom-0 bg-white">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm text-gray-500">Total estimasi</span>
+                    <span id="cart-total" class="text-xl font-black text-indigo-700">Rp 0</span>
+                </div>
+                <button onclick="checkoutCart()" id="cart-checkout" class="w-full bg-green-500 hover:bg-green-600 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-xl"></i> Pesan semua via WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BANDINGKAN -->
+    <div id="compare-modal" onclick="if(event.target===this)closeCompare()" class="hidden fixed inset-0 bg-black/70 z-[110] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-auto shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
+                <h3 class="font-black text-lg"><i class="fas fa-scale-balanced text-indigo-600 mr-2"></i>Bandingkan Produk</h3>
+                <button onclick="closeCompare()" class="text-2xl text-gray-400 hover:text-gray-700">&times;</button>
+            </div>
+            <div id="compare-content" class="p-4 overflow-x-auto"></div>
+        </div>
+    </div>
+
+    <!-- POPUP EXIT-INTENT DISKON -->
+    <div id="exit-popup" onclick="if(event.target===this)closeExitPopup()" class="hidden fixed inset-0 bg-black/70 z-[130] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden relative animate-slide-in">
+            <button onclick="closeExitPopup()" class="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-700 z-10">&times;</button>
+            <div class="bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 text-white p-8 text-center">
+                <i class="fas fa-gift text-5xl mb-3"></i>
+                <h3 class="text-3xl font-black">Tunggu Dulu! 🎁</h3>
+                <p class="mt-2 font-semibold">Dapatkan <span class="underline">harga spesial</span> untuk pembelian hari ini.</p>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-gray-600 text-sm mb-4">Tanyakan promo & ketersediaan stok langsung ke kami via WhatsApp sekarang.</p>
+                <a href="https://wa.me/6285157075592" data-wa="1" target="_blank" onclick="closeExitPopup()" class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-bold"><i class="fab fa-whatsapp text-xl"></i> Klaim Promo via WhatsApp</a>
+                <button onclick="closeExitPopup()" class="block w-full mt-3 text-xs text-gray-400 hover:text-gray-600">Nanti saja</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[140] bg-gray-900 text-white px-5 py-3 rounded-full shadow-xl text-sm font-semibold"></div>
+
     <!-- Data produk dipisah ke products.js (mudah tambah barang) -->
     <script src="products.js"></script>
     <script>
         /** --- 1. HARGA EMAS REAL-TIME --- **/
         const GOLD_PRICE_KEY = 'gold_price_last';
+        let usdRate = 17800;          // kurs USD->IDR (ditimpa dari pengaturan toko)
+        let goldPricePerGram = 0;     // harga emas Rp/gram hasil perhitungan terakhir
 
         async function fetchGoldPrice() {
             const ticker = document.getElementById('gold-ticker');
@@ -628,11 +707,12 @@
                 const data = await response.json();
 
                 const priceUsdOunce = data.price;
-                const usdToIdr = 17800; // Kurs estimasi USD ke IDR
                 const ounceToGram = 31.1035;
 
-                const priceIdrGram = (priceUsdOunce / ounceToGram) * usdToIdr;
+                const priceIdrGram = (priceUsdOunce / ounceToGram) * usdRate;
                 const roundedPrice = Math.round(priceIdrGram);
+                goldPricePerGram = roundedPrice;
+                if (typeof updateDetailEstimate === 'function') updateDetailEstimate();
                 const formattedPrice = roundedPrice.toLocaleString('id-ID');
 
                 ticker.innerText = `Rp ${formattedPrice}/gram`;
@@ -677,6 +757,7 @@
                 if (Array.isArray(rows) && rows.length) {
                     products = rows;
                     if (typeof renderProducts === 'function') renderProducts();
+                    if (typeof openDeepLinkProduct === 'function') openDeepLinkProduct();
                 }
             })
             .catch(() => { /* offline / belum ada backend → pakai data products.js */ });
@@ -695,6 +776,10 @@
                         a.href = 'https://wa.me/' + WA_NUMBER;
                     });
                 }
+                if (s.usd_rate && Number(s.usd_rate) > 0) {
+                    usdRate = Number(s.usd_rate);
+                    fetchGoldPrice(); // hitung ulang pakai kurs dari pengaturan
+                }
                 const setText = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
                 setText('promo-text', s.promo_text);
                 if (s.hours) { setText('hours-text', s.hours); document.getElementById('hours-card').classList.remove('hidden'); }
@@ -707,6 +792,8 @@
         let currentSort = 'default';
         let currentMinWeight = 0;
         let currentMaxWeight = 0;
+        let currentMinPrice = 0;
+        let currentMaxPrice = 0;
 
         function applyTheme(theme) {
             const body = document.body;
@@ -744,6 +831,8 @@
         function pesanWA(id, size) {
             const p = products.find(x => x.id === id);
             if (!p) return;
+            // catat statistik klik (tidak menghalangi UX kalau gagal)
+            fetch('/api/products/' + id + '/click', { method: 'POST' }).catch(() => {});
             const imgUrl = (p.images && p.images[0])
                 ? new URL(p.images[0], location.origin).href : '';
             const sz = size || p.size;
@@ -781,6 +870,8 @@
             currentKarat = document.getElementById('karat-select').value;
             currentMinWeight = parseFloat(document.getElementById('min-weight').value) || 0;
             currentMaxWeight = parseFloat(document.getElementById('max-weight').value) || 0;
+            currentMinPrice = parseFloat(document.getElementById('min-price').value) || 0;
+            currentMaxPrice = parseFloat(document.getElementById('max-price').value) || 0;
             renderProducts();
         }
 
@@ -807,6 +898,15 @@
                     const weight = parseWeight(p.berat);
                     if (currentMinWeight > 0 && weight < currentMinWeight) return false;
                     if (currentMaxWeight > 0 && weight > currentMaxWeight) return false;
+                    return true;
+                });
+            }
+
+            if (currentMinPrice > 0 || currentMaxPrice > 0) {
+                filtered = filtered.filter(p => {
+                    const price = Number(p.price) || 0;
+                    if (currentMinPrice > 0 && price < currentMinPrice) return false;
+                    if (currentMaxPrice > 0 && price > currentMaxPrice) return false;
                     return true;
                 });
             }
@@ -843,13 +943,20 @@
             list.innerHTML = filtered.map(p => {
                 const mainImage = getProductImages(p)[0];
                 const habis = p.badge === 'Habis';
+                const checked = compareIds.includes(p.id) ? 'checked' : '';
                 const btnHtml = habis
                     ? `<button disabled class="w-full mt-3 bg-gray-300 text-gray-600 py-2.5 rounded-xl text-xs font-bold cursor-not-allowed">Stok Habis</button>`
-                    : `<button onclick="event.stopPropagation(); pesanWA(${p.id})" class="w-full mt-3 bg-green-500 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-green-600 transition flex items-center justify-center gap-1.5"><i class="fab fa-whatsapp"></i> Pesan</button>`;
+                    : `<div class="flex gap-1.5 mt-3">
+                        <button onclick="event.stopPropagation(); pesanWA(${p.id})" class="flex-1 bg-green-500 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-green-600 transition flex items-center justify-center gap-1.5"><i class="fab fa-whatsapp"></i> Pesan</button>
+                        <button onclick="event.stopPropagation(); addToCart(${p.id})" title="Tambah ke keranjang" class="px-3 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition"><i class="fas fa-cart-plus"></i></button>
+                       </div>`;
                 return `
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group relative">
                     <div class="relative overflow-hidden aspect-square cursor-pointer" onclick="openDetail(${p.id})">
                         ${badgeHtml(p.badge)}
+                        <label onclick="event.stopPropagation()" title="Pilih untuk dibandingkan" class="absolute top-3 right-3 z-10 flex items-center gap-1 bg-white/90 backdrop-blur px-2 py-1 rounded-full shadow text-[10px] font-bold text-gray-700 cursor-pointer">
+                            <input type="checkbox" ${checked} onchange="toggleCompare(${p.id}, this.checked)" class="w-3.5 h-3.5 accent-indigo-600"> Bandingkan
+                        </label>
                         <img src="${mainImage}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22&gt;&lt;rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eef2ff%22/&gt;&lt;text x=%2250%25%22 y=%2250%25%22 font-family=%22sans-serif%22 font-size=%2218%22 fill=%22%236366f1%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22&gt;Foto tidak ditemukan&lt;/text&gt;&lt;/svg&gt;'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                             <span class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-xs shadow-lg">Lihat Detail</span>
@@ -943,6 +1050,9 @@
             }
 
             document.getElementById('ring-guide-link').classList.toggle('hidden', p.category !== 'Cincin');
+            document.getElementById('detail-cart-btn').onclick = () => { addToCart(p.id); };
+            document.getElementById('detail-share-btn').onclick = () => { shareProduct(p); };
+            updateDetailEstimate();
             renderSimilar(p);
 
             const modal = document.getElementById('detail-modal');
@@ -1023,10 +1133,209 @@
             }
         }
 
+        /** --- 5. ESTIMASI HARGA EMAS --- **/
+        // Konversi 'karat' produk (700/420/23) menjadi faktor kemurnian emas.
+        function goldFactor(karat) {
+            const n = parseFloat(String(karat == null ? '' : karat).replace(',', '.'));
+            if (!n) return 0;
+            if (n > 100) return Math.min(n / 1000, 1);   // per-mille: 700 -> 0.70
+            if (n <= 24) return Math.min(n / 24, 1);     // karat: 23 -> ~0.96
+            return Math.min(n / 100, 1);
+        }
+        function estimateValue(p) {
+            if (!goldPricePerGram) return 0;
+            const grams = parseWeight(p.berat);
+            const factor = goldFactor(p.karat || p.emas);
+            if (!grams || !factor) return 0;
+            return Math.round(goldPricePerGram * grams * factor);
+        }
+        function updateDetailEstimate() {
+            const modal = document.getElementById('detail-modal');
+            const el = document.getElementById('detail-estimate');
+            const id = Number(modal.dataset.productId);
+            if (!id || !el) return;
+            const p = products.find(x => x.id === id);
+            const est = p ? estimateValue(p) : 0;
+            if (est > 0) {
+                el.innerHTML = `<i class="fas fa-coins"></i> Estimasi nilai emas hari ini: ± Rp ${est.toLocaleString('id-ID')}`;
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        /** --- 6. KERANJANG MULTI-PRODUK --- **/
+        const CART_KEY = 'cart_karyabaru';
+        let cart = [];
+        try { cart = JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch (e) { cart = []; }
+
+        function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); updateCartCount(); }
+        function updateCartCount() {
+            const badge = document.getElementById('cart-count');
+            if (cart.length) { badge.textContent = cart.length; badge.classList.remove('hidden'); }
+            else badge.classList.add('hidden');
+        }
+        function addToCart(id) {
+            if (cart.includes(id)) { showToast('Sudah ada di keranjang'); return; }
+            cart.push(id); saveCart(); showToast('✓ Ditambahkan ke keranjang');
+        }
+        function removeFromCart(id) { cart = cart.filter(x => x !== id); saveCart(); renderCart(); }
+        function openCart() { renderCart(); document.getElementById('cart-modal').classList.remove('hidden'); document.body.classList.add('modal-active'); }
+        function closeCart() { document.getElementById('cart-modal').classList.add('hidden'); document.body.classList.remove('modal-active'); }
+        function renderCart() {
+            const wrap = document.getElementById('cart-items');
+            const items = cart.map(id => products.find(p => p.id === id)).filter(Boolean);
+            document.getElementById('cart-checkout').disabled = !items.length;
+            if (!items.length) {
+                wrap.innerHTML = '<p class="text-center text-gray-400 py-10">Keranjang masih kosong.</p>';
+                document.getElementById('cart-total').textContent = 'Rp 0';
+                return;
+            }
+            let total = 0;
+            wrap.innerHTML = items.map(p => {
+                total += Number(p.price) || 0;
+                const img = getProductImages(p)[0] || '';
+                return `<div class="flex items-center gap-3 border rounded-2xl p-3">
+                    <img src="${img}" class="w-16 h-16 object-cover rounded-xl bg-gray-100">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-sm truncate">${p.name}</p>
+                        <p class="text-indigo-700 font-bold text-sm">Rp ${Number(p.price).toLocaleString('id-ID')}</p>
+                    </div>
+                    <button onclick="removeFromCart(${p.id})" class="text-red-500 hover:text-red-700 px-2"><i class="fas fa-trash"></i></button>
+                </div>`;
+            }).join('');
+            document.getElementById('cart-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+        }
+        function checkoutCart() {
+            const items = cart.map(id => products.find(p => p.id === id)).filter(Boolean);
+            if (!items.length) return;
+            items.forEach(p => fetch('/api/products/' + p.id + '/click', { method: 'POST' }).catch(() => {}));
+            let total = 0;
+            let text = '*PESANAN - KARYABARU*\n--------------------------------------\n';
+            items.forEach((p, i) => {
+                total += Number(p.price) || 0;
+                text += `${i + 1}. *${p.name}*\n   Harga: Rp ${Number(p.price).toLocaleString('id-ID')}\n`;
+                if (p.emas || p.karat) text += `   Emas: ${p.emas || p.karat}\n`;
+                if (p.berat) text += `   Berat: ${p.berat}\n`;
+            });
+            text += '--------------------------------------\n';
+            text += `Total estimasi: Rp ${total.toLocaleString('id-ID')}\n\n`;
+            text += 'Halo, saya ingin memesan produk di atas.\nNama:\nAlamat:\n\n';
+            text += '_NOTED: HARGA DAPAT BERUBAH SESUAI HARGA EMAS SAAT PEMESANAN_';
+            window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        /** --- 7. BANDINGKAN PRODUK --- **/
+        let compareIds = [];
+        function toggleCompare(id, checked) {
+            if (checked) {
+                if (compareIds.length >= 3) { showToast('Maksimal 3 produk'); renderProducts(); return; }
+                if (!compareIds.includes(id)) compareIds.push(id);
+            } else {
+                compareIds = compareIds.filter(x => x !== id);
+            }
+            renderCompareBar();
+        }
+        function renderCompareBar() {
+            const bar = document.getElementById('compare-bar');
+            document.getElementById('compare-count').textContent = compareIds.length;
+            bar.classList.toggle('hidden', compareIds.length === 0);
+        }
+        function clearCompare() { compareIds = []; renderCompareBar(); renderProducts(); }
+        function closeCompare() { document.getElementById('compare-modal').classList.add('hidden'); document.body.classList.remove('modal-active'); }
+        function openCompare() {
+            const items = compareIds.map(id => products.find(p => p.id === id)).filter(Boolean);
+            if (items.length < 2) { showToast('Pilih minimal 2 produk'); return; }
+            const rows = [
+                ['Foto', p => `<img src="${getProductImages(p)[0] || ''}" class="w-24 h-24 object-cover rounded-xl mx-auto bg-gray-100">`],
+                ['Nama', p => `<span class="font-bold">${p.name}</span>`],
+                ['Kategori', p => p.category || '-'],
+                ['Harga', p => `<span class="text-indigo-700 font-bold">Rp ${Number(p.price).toLocaleString('id-ID')}</span>`],
+                ['Emas', p => p.emas || p.karat || '-'],
+                ['Berat', p => p.berat || '-'],
+                ['Ukuran', p => p.size || '-'],
+                ['Sertifikat', p => p.certified ? '✓' : '-'],
+                ['', p => `<button onclick="closeCompare(); openDetail(${p.id})" class="bg-indigo-600 text-white text-xs px-3 py-2 rounded-full font-bold">Lihat detail</button>`],
+            ];
+            let html = '<table class="w-full text-sm text-center border-collapse"><tbody>';
+            rows.forEach(([label, fn]) => {
+                html += `<tr class="border-b"><td class="py-2 px-2 text-left font-bold text-gray-500 whitespace-nowrap">${label}</td>` +
+                    items.map(p => `<td class="py-2 px-2 align-middle">${fn(p)}</td>`).join('') + '</tr>';
+            });
+            html += '</tbody></table>';
+            document.getElementById('compare-content').innerHTML = html;
+            document.getElementById('compare-modal').classList.remove('hidden');
+            document.body.classList.add('modal-active');
+        }
+
+        /** --- 8. BAGIKAN PRODUK --- **/
+        async function shareProduct(p) {
+            const url = location.origin + (p.slug ? '/produk/' + p.slug : '/');
+            const shareData = { title: p.name + ' - KARYABARU', text: `${p.name} - Rp ${Number(p.price).toLocaleString('id-ID')}`, url };
+            if (navigator.share) {
+                try { await navigator.share(shareData); } catch (e) { /* user batal */ }
+                return;
+            }
+            try { await navigator.clipboard.writeText(url); showToast('✓ Link produk disalin'); }
+            catch (e) { window.open('https://wa.me/?text=' + encodeURIComponent(shareData.text + ' ' + url), '_blank'); }
+        }
+
+        /** --- 9. POPUP EXIT-INTENT --- **/
+        const EXIT_KEY = 'exit_shown_karyabaru';
+        function showExitPopup() {
+            if (sessionStorage.getItem(EXIT_KEY)) return;
+            sessionStorage.setItem(EXIT_KEY, '1');
+            document.getElementById('exit-popup').classList.remove('hidden');
+        }
+        function closeExitPopup() { document.getElementById('exit-popup').classList.add('hidden'); }
+        document.addEventListener('mouseout', (e) => {
+            if (e.clientY <= 0 && !e.relatedTarget) showExitPopup();
+        });
+
+        /** --- TOAST --- **/
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.add('hidden'), 2200);
+        }
+
+        /** --- SKELETON SHIMMER --- **/
+        function showSkeleton() {
+            const list = document.getElementById('product-list');
+            list.innerHTML = Array.from({ length: 8 }).map(() => `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+                    <div class="aspect-square bg-gray-200"></div>
+                    <div class="p-4 space-y-2">
+                        <div class="h-2 bg-gray-200 rounded w-1/3"></div>
+                        <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div class="h-8 bg-gray-200 rounded-xl mt-3"></div>
+                    </div>
+                </div>`).join('');
+        }
+
+        /** --- DEEP-LINK PER-PRODUK (/produk/<slug>) --- **/
+        function openDeepLinkProduct() {
+            let slug = window.__PRODUCT_SLUG__ || '';
+            if (!slug) {
+                const m = location.pathname.match(/^\/produk\/([^/]+)/);
+                if (m) slug = decodeURIComponent(m[1]);
+            }
+            if (!slug) return;
+            const p = products.find(x => x.slug === slug);
+            if (p) openDetail(p.id);
+        }
+
         loadTheme();
         document.getElementById('footer-year').textContent = new Date().getFullYear();
+        updateCartCount();
+        // Tampilkan skeleton kalau belum ada data awal (menunggu API).
+        if (!products.length) showSkeleton();
         // Inisialisasi Produk
         renderProducts();
+        openDeepLinkProduct();
     </script>
 </body>
 </html>
