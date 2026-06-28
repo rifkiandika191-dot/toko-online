@@ -8,7 +8,12 @@ const crypto = require('crypto');
 const express = require('express');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
-const sharp = require('sharp');
+// sharp opsional: kalau gagal dimuat (mis. Node/arsitektur tak cocok), upload tetap
+// jalan tanpa kompres — server tidak boleh crash karenanya.
+let sharp = null;
+try { sharp = require('sharp'); } catch (e) {
+  console.warn('[server] sharp tidak tersedia, kompres gambar dilewati:', e.message);
+}
 const { pool, init, slugify } = require('./db');
 
 const app = express();
@@ -275,7 +280,7 @@ app.delete('/api/products/:id', requireAuth, async (req, res) => {
 // Kompres & perkecil 1 gambar di tempat (overwrite). Format DIPERTAHANKAN agar
 // cocok dengan ekstensi/Content-Type. GIF dibiarkan (bisa animasi).
 async function compressImage(file) {
-  if (file.mimetype === 'image/gif') return;
+  if (!sharp || file.mimetype === 'image/gif') return;
   try {
     let img = sharp(file.path)
       .rotate() // perbaiki orientasi dari EXIF HP
